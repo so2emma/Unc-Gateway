@@ -1,0 +1,50 @@
+# Exclude the phases directory as requested
+phases/
+
+# IDE configurations
+.idea/
+.vscode/
+.kiro/
+*.iml
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Maven / Java
+target/
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+*.log
+logs/
+
+# Node.js
+node_modules/
+dist/
+build/
+.npm
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Secrets and Keys
+*.pem
+*.key
+*.cert
+*.p12
+*.jks
