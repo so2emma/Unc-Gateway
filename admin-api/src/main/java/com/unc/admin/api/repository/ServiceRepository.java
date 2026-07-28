@@ -6,15 +6,16 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface ServiceRepository extends JpaRepository<ServiceEntity, String> {
+public interface ServiceRepository extends JpaRepository<ServiceEntity, UUID> {
 
-    List<ServiceEntity> findByTenantId(String tenantId);
+    List<ServiceEntity> findByTenantId(UUID tenantId);
 
-    Optional<ServiceEntity> findByIdAndTenantId(String id, String tenantId);
+    Optional<ServiceEntity> findByIdAndTenantId(UUID id, UUID tenantId);
 
-    void deleteByIdAndTenantId(String id, String tenantId);
+    void deleteByIdAndTenantId(UUID id, UUID tenantId);
 
-    boolean existsByIdAndTenantId(String id, String tenantId);
+    boolean existsByIdAndTenantId(UUID id, UUID tenantId);
 }

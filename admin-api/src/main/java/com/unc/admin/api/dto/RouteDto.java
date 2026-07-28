@@ -4,12 +4,13 @@ import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 public class RouteDto {
 
-    private String id;
-    private String tenantId;
-    private String serviceId;
+    private UUID id;
+    private UUID tenantId;
+    private UUID serviceId;
     private String name;
 
     @JsonAlias({"path", "paths"})
@@ -25,27 +26,27 @@ public class RouteDto {
     public RouteDto() {
     }
 
-    public String getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 
-    public String getTenantId() {
+    public UUID getTenantId() {
         return tenantId;
     }
 
-    public void setTenantId(String tenantId) {
+    public void setTenantId(UUID tenantId) {
         this.tenantId = tenantId;
     }
 
-    public String getServiceId() {
+    public UUID getServiceId() {
         return serviceId;
     }
 
-    public void setServiceId(String serviceId) {
+    public void setServiceId(UUID serviceId) {
         this.serviceId = serviceId;
     }
 

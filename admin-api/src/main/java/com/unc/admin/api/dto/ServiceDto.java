@@ -4,11 +4,12 @@ import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 public class ServiceDto {
 
-    private String id;
-    private String tenantId;
+    private UUID id;
+    private UUID tenantId;
     private String name;
 
     @JsonAlias({"upstreamUrl", "url"})
@@ -23,19 +24,19 @@ public class ServiceDto {
     public ServiceDto() {
     }
 
-    public String getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 
-    public String getTenantId() {
+    public UUID getTenantId() {
         return tenantId;
     }
 
-    public void setTenantId(String tenantId) {
+    public void setTenantId(UUID tenantId) {
         this.tenantId = tenantId;
     }
 

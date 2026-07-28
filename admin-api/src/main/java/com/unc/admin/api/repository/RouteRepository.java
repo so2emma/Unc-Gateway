@@ -6,15 +6,16 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface RouteRepository extends JpaRepository<RouteEntity, String> {
+public interface RouteRepository extends JpaRepository<RouteEntity, UUID> {
 
-    List<RouteEntity> findByTenantId(String tenantId);
+    List<RouteEntity> findByTenantId(UUID tenantId);
 
-    Optional<RouteEntity> findByIdAndTenantId(String id, String tenantId);
+    Optional<RouteEntity> findByIdAndTenantId(UUID id, UUID tenantId);
 
-    void deleteByIdAndTenantId(String id, String tenantId);
+    void deleteByIdAndTenantId(UUID id, UUID tenantId);
 
-    List<RouteEntity> findByServiceIdAndTenantId(String serviceId, String tenantId);
+    List<RouteEntity> findByServiceIdAndTenantId(UUID serviceId, UUID tenantId);
 }
