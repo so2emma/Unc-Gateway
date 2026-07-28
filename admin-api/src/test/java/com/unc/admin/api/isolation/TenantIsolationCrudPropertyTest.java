@@ -12,7 +12,7 @@ class TenantIsolationCrudPropertyTest {
     @Property(tries = 150)
     @Label("TENANT_ISOLATION: Service CRUD queries scoped to tenant_id never return, mutate, or delete rows of another tenant")
     boolean serviceCrudIsolation(
-            @ForAll("tenantList") List<String> tenants,
+            @ForAll("tenantList") List<UUID> tenants,
             @ForAll("serviceDataset") List<ServiceEntity> dataset,
             @ForAll("targetTenantIdx") int targetIdx
     ) {
@@ -20,7 +20,7 @@ class TenantIsolationCrudPropertyTest {
             return true;
         }
 
-        String targetTenantId = tenants.get(Math.abs(targetIdx) % tenants.size());
+        UUID targetTenantId = tenants.get(Math.abs(targetIdx) % tenants.size());
 
         // Simulate repository findByTenantId
         List<ServiceEntity> tenantServices = dataset.stream()
@@ -31,7 +31,7 @@ class TenantIsolationCrudPropertyTest {
         boolean readIsolated = tenantServices.stream().allMatch(s -> targetTenantId.equals(s.getTenantId()));
 
         // Simulate repository findByIdAndTenantId
-        String searchId = dataset.get(0).getId();
+        UUID searchId = dataset.get(0).getId();
         Optional<ServiceEntity> found = dataset.stream()
                 .filter(s -> searchId.equals(s.getId()) && targetTenantId.equals(s.getTenantId()))
                 .findFirst();
@@ -44,7 +44,7 @@ class TenantIsolationCrudPropertyTest {
     @Property(tries = 150)
     @Label("TENANT_ISOLATION: Route CRUD queries scoped to tenant_id never return, mutate, or delete rows of another tenant")
     boolean routeCrudIsolation(
-            @ForAll("tenantList") List<String> tenants,
+            @ForAll("tenantList") List<UUID> tenants,
             @ForAll("routeDataset") List<RouteEntity> dataset,
             @ForAll("targetTenantIdx") int targetIdx
     ) {
@@ -52,7 +52,7 @@ class TenantIsolationCrudPropertyTest {
             return true;
         }
 
-        String targetTenantId = tenants.get(Math.abs(targetIdx) % tenants.size());
+        UUID targetTenantId = tenants.get(Math.abs(targetIdx) % tenants.size());
 
         // Simulate repository findByTenantId
         List<RouteEntity> tenantRoutes = dataset.stream()
@@ -64,14 +64,24 @@ class TenantIsolationCrudPropertyTest {
     }
 
     @Provide
-    Arbitrary<List<String>> tenantList() {
-        return Arbitraries.of("tenant-a", "tenant-b", "tenant-c", "tenant-d").list().ofMinSize(2).ofMaxSize(4);
+    Arbitrary<List<UUID>> tenantList() {
+        return Arbitraries.of(
+                UUID.fromString("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"),
+                UUID.fromString("b1eebc99-9c0b-4ef8-bb6d-6bb9bd380b22"),
+                UUID.fromString("c2eebc99-9c0b-4ef8-bb6d-6bb9bd380c33"),
+                UUID.fromString("d3eebc99-9c0b-4ef8-bb6d-6bb9bd380d44")
+        ).list().ofMinSize(2).ofMaxSize(4);
     }
 
     @Provide
     Arbitrary<List<ServiceEntity>> serviceDataset() {
-        Arbitrary<String> ids = Arbitraries.strings().numeric().ofLength(5);
-        Arbitrary<String> tenants = Arbitraries.of("tenant-a", "tenant-b", "tenant-c", "tenant-d");
+        Arbitrary<UUID> ids = Arbitraries.create(UUID::randomUUID);
+        Arbitrary<UUID> tenants = Arbitraries.of(
+                UUID.fromString("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"),
+                UUID.fromString("b1eebc99-9c0b-4ef8-bb6d-6bb9bd380b22"),
+                UUID.fromString("c2eebc99-9c0b-4ef8-bb6d-6bb9bd380c33"),
+                UUID.fromString("d3eebc99-9c0b-4ef8-bb6d-6bb9bd380d44")
+        );
         Arbitrary<String> names = Arbitraries.strings().alpha().ofLength(8);
         Arbitrary<String> urls = Arbitraries.of("http://upstream1:9090", "http://upstream2:9090");
 
@@ -89,9 +99,14 @@ class TenantIsolationCrudPropertyTest {
 
     @Provide
     Arbitrary<List<RouteEntity>> routeDataset() {
-        Arbitrary<String> ids = Arbitraries.strings().numeric().ofLength(5);
-        Arbitrary<String> tenants = Arbitraries.of("tenant-a", "tenant-b", "tenant-c", "tenant-d");
-        Arbitrary<String> srvIds = Arbitraries.strings().numeric().ofLength(5);
+        Arbitrary<UUID> ids = Arbitraries.create(UUID::randomUUID);
+        Arbitrary<UUID> tenants = Arbitraries.of(
+                UUID.fromString("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"),
+                UUID.fromString("b1eebc99-9c0b-4ef8-bb6d-6bb9bd380b22"),
+                UUID.fromString("c2eebc99-9c0b-4ef8-bb6d-6bb9bd380c33"),
+                UUID.fromString("d3eebc99-9c0b-4ef8-bb6d-6bb9bd380d44")
+        );
+        Arbitrary<UUID> srvIds = Arbitraries.create(UUID::randomUUID);
         Arbitrary<String> paths = Arbitraries.of("/demo", "/api", "/v1");
 
         Arbitrary<RouteEntity> routeArb = Combinators.combine(ids, tenants, srvIds, paths).as((id, tId, sId, p) -> {
