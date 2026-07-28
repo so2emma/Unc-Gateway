@@ -24,6 +24,9 @@ class HealthControllerTest {
     @MockBean
     private DataSource dataSource;
 
+    @MockBean
+    private com.unc.admin.api.repository.TenantRepository tenantRepository;
+
     @Test
     @DisplayName("GET /health - should return HTTP 200 with status UP")
     void testHealthEndpoint() throws Exception {
