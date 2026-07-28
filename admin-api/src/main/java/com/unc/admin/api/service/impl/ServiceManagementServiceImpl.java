@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,7 +26,7 @@ public class ServiceManagementServiceImpl implements ServiceManagementService {
 
     @Override
     public ServiceDto createService(ServiceDto dto) {
-        String tenantId = TenantContext.getTenantId();
+        UUID tenantId = TenantContext.getTenantId();
         if (dto.getName() == null || dto.getName().trim().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Service name is required");
         }
@@ -52,7 +53,7 @@ public class ServiceManagementServiceImpl implements ServiceManagementService {
     @Override
     @Transactional(readOnly = true)
     public List<ServiceDto> listServices() {
-        String tenantId = TenantContext.getTenantId();
+        UUID tenantId = TenantContext.getTenantId();
         return serviceRepository.findByTenantId(tenantId).stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
@@ -60,16 +61,16 @@ public class ServiceManagementServiceImpl implements ServiceManagementService {
 
     @Override
     @Transactional(readOnly = true)
-    public ServiceDto getService(String id) {
-        String tenantId = TenantContext.getTenantId();
+    public ServiceDto getService(UUID id) {
+        UUID tenantId = TenantContext.getTenantId();
         return serviceRepository.findByIdAndTenantId(id, tenantId)
                 .map(this::toDto)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Service not found"));
     }
 
     @Override
-    public ServiceDto updateService(String id, ServiceDto dto) {
-        String tenantId = TenantContext.getTenantId();
+    public ServiceDto updateService(UUID id, ServiceDto dto) {
+        UUID tenantId = TenantContext.getTenantId();
         ServiceEntity entity = serviceRepository.findByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Service not found"));
 
@@ -92,8 +93,8 @@ public class ServiceManagementServiceImpl implements ServiceManagementService {
     }
 
     @Override
-    public void deleteService(String id) {
-        String tenantId = TenantContext.getTenantId();
+    public void deleteService(UUID id) {
+        UUID tenantId = TenantContext.getTenantId();
         if (!serviceRepository.existsByIdAndTenantId(id, tenantId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Service not found");
         }

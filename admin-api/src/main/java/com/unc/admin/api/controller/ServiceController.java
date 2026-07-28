@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/admin/services")
@@ -30,17 +31,17 @@ public class ServiceController {
     }
 
     @GetMapping("/{id}")
-    public ServiceDto getService(@PathVariable("id") String id) {
+    public ServiceDto getService(@PathVariable("id") UUID id) {
         return serviceManagementService.getService(id);
     }
 
     @PutMapping("/{id}")
-    public ServiceDto updateService(@PathVariable("id") String id, @RequestBody ServiceDto dto) {
+    public ServiceDto updateService(@PathVariable("id") UUID id, @RequestBody ServiceDto dto) {
         return serviceManagementService.updateService(id, dto);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteService(@PathVariable("id") String id) {
+    public ResponseEntity<Void> deleteService(@PathVariable("id") UUID id) {
         serviceManagementService.deleteService(id);
         return ResponseEntity.noContent().build();
     }

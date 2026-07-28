@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,8 +29,8 @@ public class RouteManagementServiceImpl implements RouteManagementService {
 
     @Override
     public RouteDto createRoute(RouteDto dto) {
-        String tenantId = TenantContext.getTenantId();
-        if (dto.getServiceId() == null || dto.getServiceId().trim().isEmpty()) {
+        UUID tenantId = TenantContext.getTenantId();
+        if (dto.getServiceId() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "serviceId is required");
         }
         String paths = dto.getPaths() != null ? dto.getPaths() : dto.getPath();
@@ -59,7 +60,7 @@ public class RouteManagementServiceImpl implements RouteManagementService {
     @Override
     @Transactional(readOnly = true)
     public List<RouteDto> listRoutes() {
-        String tenantId = TenantContext.getTenantId();
+        UUID tenantId = TenantContext.getTenantId();
         return routeRepository.findByTenantId(tenantId).stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
@@ -67,16 +68,16 @@ public class RouteManagementServiceImpl implements RouteManagementService {
 
     @Override
     @Transactional(readOnly = true)
-    public RouteDto getRoute(String id) {
-        String tenantId = TenantContext.getTenantId();
+    public RouteDto getRoute(UUID id) {
+        UUID tenantId = TenantContext.getTenantId();
         return routeRepository.findByIdAndTenantId(id, tenantId)
                 .map(this::toDto)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Route not found"));
     }
 
     @Override
-    public RouteDto updateRoute(String id, RouteDto dto) {
-        String tenantId = TenantContext.getTenantId();
+    public RouteDto updateRoute(UUID id, RouteDto dto) {
+        UUID tenantId = TenantContext.getTenantId();
         RouteEntity entity = routeRepository.findByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Route not found"));
 
@@ -108,8 +109,8 @@ public class RouteManagementServiceImpl implements RouteManagementService {
     }
 
     @Override
-    public void deleteRoute(String id) {
-        String tenantId = TenantContext.getTenantId();
+    public void deleteRoute(UUID id) {
+        UUID tenantId = TenantContext.getTenantId();
         RouteEntity entity = routeRepository.findByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Route not found"));
         routeRepository.deleteByIdAndTenantId(entity.getId(), tenantId);

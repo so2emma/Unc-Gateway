@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/admin/routes")
@@ -30,17 +31,17 @@ public class RouteController {
     }
 
     @GetMapping("/{id}")
-    public RouteDto getRoute(@PathVariable("id") String id) {
+    public RouteDto getRoute(@PathVariable("id") UUID id) {
         return routeManagementService.getRoute(id);
     }
 
     @PutMapping("/{id}")
-    public RouteDto updateRoute(@PathVariable("id") String id, @RequestBody RouteDto dto) {
+    public RouteDto updateRoute(@PathVariable("id") UUID id, @RequestBody RouteDto dto) {
         return routeManagementService.updateRoute(id, dto);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteRoute(@PathVariable("id") String id) {
+    public ResponseEntity<Void> deleteRoute(@PathVariable("id") UUID id) {
         routeManagementService.deleteRoute(id);
         return ResponseEntity.noContent().build();
     }

@@ -3,11 +3,12 @@ package com.unc.admin.api.service;
 import com.unc.admin.api.dto.ServiceDto;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface ServiceManagementService {
     ServiceDto createService(ServiceDto dto);
     List<ServiceDto> listServices();
-    ServiceDto getService(String id);
-    ServiceDto updateService(String id, ServiceDto dto);
-    void deleteService(String id);
+    ServiceDto getService(UUID id);
+    ServiceDto updateService(UUID id, ServiceDto dto);
+    void deleteService(UUID id);
 }
