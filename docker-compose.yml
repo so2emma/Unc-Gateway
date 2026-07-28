@@ -34,5 +34,15 @@ services:
       postgres:
         condition: service_healthy
 
+  mock-upstream:
+    build:
+      context: .
+      dockerfile: mock-upstream/Dockerfile
+    container_name: unc-mock-upstream
+    restart: always
+    ports:
+      - "9090:9090"
+      - "8085:9090"
+
 volumes:
   postgres_data:
