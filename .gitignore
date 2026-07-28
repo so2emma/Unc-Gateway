@@ -42,6 +42,9 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 
+# JQwik
+.jqwik-database
+
 # Secrets and Keys
 *.pem
 *.key
