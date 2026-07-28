@@ -9,10 +9,11 @@ import java.util.UUID;
 public class ServiceEntity {
 
     @Id
-    private String id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @Column(name = "tenant_id", nullable = false)
-    private String tenantId;
+    private UUID tenantId;
 
     @Column(nullable = false)
     private String name;
@@ -37,9 +38,6 @@ public class ServiceEntity {
 
     @PrePersist
     public void prePersist() {
-        if (id == null || id.trim().isEmpty()) {
-            id = UUID.randomUUID().toString();
-        }
         if (createdAt == null) {
             createdAt = OffsetDateTime.now();
         }
@@ -57,19 +55,19 @@ public class ServiceEntity {
         updatedAt = OffsetDateTime.now();
     }
 
-    public String getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 
-    public String getTenantId() {
+    public UUID getTenantId() {
         return tenantId;
     }
 
-    public void setTenantId(String tenantId) {
+    public void setTenantId(UUID tenantId) {
         this.tenantId = tenantId;
     }
 

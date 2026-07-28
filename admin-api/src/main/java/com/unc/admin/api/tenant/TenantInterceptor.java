@@ -9,6 +9,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.HandlerInterceptor;
 
+import java.util.UUID;
+
 @Component
 public class TenantInterceptor implements HandlerInterceptor {
 
@@ -25,20 +27,30 @@ public class TenantInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        String tenantId = request.getHeader("X-Tenant-Id");
-        if (tenantId == null || tenantId.trim().isEmpty()) {
-            tenantId = request.getParameter("tenant_id");
+        String rawTenantId = request.getHeader("X-Tenant-Id");
+        if (rawTenantId == null || rawTenantId.trim().isEmpty()) {
+            rawTenantId = request.getParameter("tenant_id");
         }
 
-        if (tenantId == null || tenantId.trim().isEmpty()) {
+        if (rawTenantId == null || rawTenantId.trim().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "X-Tenant-Id header is required");
         }
 
-        tenantId = tenantId.trim();
+        UUID tenantId;
+        try {
+            tenantId = UUID.fromString(rawTenantId.trim());
+        } catch (IllegalArgumentException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "X-Tenant-Id header must be a valid UUID");
+        }
+
         TenantContext.setTenantId(tenantId);
 
         if (!tenantRepository.existsById(tenantId)) {
-            tenantRepository.save(new TenantEntity(tenantId, tenantId));
+            TenantEntity newTenant = new TenantEntity();
+            newTenant.setId(tenantId);
+            newTenant.setTenantId(tenantId);
+            newTenant.setName("Tenant-" + tenantId);
+            tenantRepository.saveAndFlush(newTenant);
         }
 
         return true;

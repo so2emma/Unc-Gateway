@@ -1,17 +1,19 @@
 package com.unc.admin.api.tenant;
 
+import java.util.UUID;
+
 public final class TenantContext {
 
-    private static final ThreadLocal<String> CURRENT_TENANT = new ThreadLocal<>();
+    private static final ThreadLocal<UUID> CURRENT_TENANT = new ThreadLocal<>();
 
     private TenantContext() {
     }
 
-    public static String getTenantId() {
+    public static UUID getTenantId() {
         return CURRENT_TENANT.get();
     }
 
-    public static void setTenantId(String tenantId) {
+    public static void setTenantId(UUID tenantId) {
         CURRENT_TENANT.set(tenantId);
     }
 

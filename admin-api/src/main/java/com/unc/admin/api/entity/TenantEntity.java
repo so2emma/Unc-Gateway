@@ -1,20 +1,23 @@
 package com.unc.admin.api.entity;
 
 import jakarta.persistence.*;
+import org.springframework.data.domain.Persistable;
+
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "tenants")
-public class TenantEntity {
+public class TenantEntity implements Persistable<UUID> {
 
     @Id
-    private String id;
+    private UUID id;
 
     @Column(nullable = false)
     private String name;
 
     @Column(name = "tenant_id")
-    private String tenantId;
+    private UUID tenantId;
 
     @Column(name = "created_at")
     private OffsetDateTime createdAt;
@@ -22,13 +25,28 @@ public class TenantEntity {
     @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
 
+    @Transient
+    private boolean isNew = true;
+
     public TenantEntity() {
     }
 
-    public TenantEntity(String id, String name) {
+    public TenantEntity(UUID id, String name) {
         this.id = id;
         this.name = name;
         this.tenantId = id;
+        this.isNew = true;
+    }
+
+    @Override
+    public boolean isNew() {
+        return isNew;
+    }
+
+    @PostLoad
+    @PostPersist
+    public void markNotNew() {
+        this.isNew = false;
     }
 
     @PrePersist
@@ -47,11 +65,12 @@ public class TenantEntity {
         updatedAt = OffsetDateTime.now();
     }
 
-    public String getId() {
+    @Override
+    public UUID getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 
@@ -63,11 +82,11 @@ public class TenantEntity {
         this.name = name;
     }
 
-    public String getTenantId() {
+    public UUID getTenantId() {
         return tenantId;
     }
 
-    public void setTenantId(String tenantId) {
+    public void setTenantId(UUID tenantId) {
         this.tenantId = tenantId;
     }
 

@@ -9,13 +9,14 @@ import java.util.UUID;
 public class RouteEntity {
 
     @Id
-    private String id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @Column(name = "tenant_id", nullable = false)
-    private String tenantId;
+    private UUID tenantId;
 
     @Column(name = "service_id", nullable = false)
-    private String serviceId;
+    private UUID serviceId;
 
     private String name;
 
@@ -40,9 +41,6 @@ public class RouteEntity {
 
     @PrePersist
     public void prePersist() {
-        if (id == null || id.trim().isEmpty()) {
-            id = UUID.randomUUID().toString();
-        }
         if (createdAt == null) {
             createdAt = OffsetDateTime.now();
         }
@@ -57,27 +55,27 @@ public class RouteEntity {
         updatedAt = OffsetDateTime.now();
     }
 
-    public String getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 
-    public String getTenantId() {
+    public UUID getTenantId() {
         return tenantId;
     }
 
-    public void setTenantId(String tenantId) {
+    public void setTenantId(UUID tenantId) {
         this.tenantId = tenantId;
     }
 
-    public String getServiceId() {
+    public UUID getServiceId() {
         return serviceId;
     }
 
-    public void setServiceId(String serviceId) {
+    public void setServiceId(UUID serviceId) {
         this.serviceId = serviceId;
     }
 
