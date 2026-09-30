@@ -19,6 +19,14 @@ public class TenantEntity implements Persistable<UUID> {
     @Column(name = "tenant_id")
     private UUID tenantId;
 
+    @Column(name = "api_key", unique = true)
+    private String apiKey;
+
+    @Column(length = 50)
+    private String status = "ACTIVE";
+
+    private String email;
+
     @Column(name = "created_at")
     private OffsetDateTime createdAt;
 
@@ -35,6 +43,16 @@ public class TenantEntity implements Persistable<UUID> {
         this.id = id;
         this.name = name;
         this.tenantId = id;
+        this.isNew = true;
+    }
+
+    public TenantEntity(UUID id, String name, String apiKey, String email) {
+        this.id = id;
+        this.name = name;
+        this.tenantId = id;
+        this.apiKey = apiKey;
+        this.email = email;
+        this.status = "ACTIVE";
         this.isNew = true;
     }
 
@@ -57,6 +75,9 @@ public class TenantEntity implements Persistable<UUID> {
         updatedAt = OffsetDateTime.now();
         if (tenantId == null) {
             tenantId = id;
+        }
+        if (status == null) {
+            status = "ACTIVE";
         }
     }
 
@@ -88,6 +109,30 @@ public class TenantEntity implements Persistable<UUID> {
 
     public void setTenantId(UUID tenantId) {
         this.tenantId = tenantId;
+    }
+
+    public String getApiKey() {
+        return apiKey;
+    }
+
+    public void setApiKey(String apiKey) {
+        this.apiKey = apiKey;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public OffsetDateTime getCreatedAt() {
