@@ -44,13 +44,14 @@ class RouteControllerTest {
     private TenantRepository tenantRepository;
 
     private static final UUID TENANT_A = UUID.fromString("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11");
+    private static final String API_KEY_A = "unc_live_sec_1234567890abcdef";
     private static final UUID SERVICE_ID = UUID.fromString("b1eebc99-9c0b-4ef8-bb6d-6bb9bd380b22");
     private static final UUID ROUTE_ID = UUID.fromString("c2eebc99-9c0b-4ef8-bb6d-6bb9bd380c33");
 
     @Test
-    @DisplayName("POST /api/admin/routes - valid request creates tenant-scoped route")
+    @DisplayName("POST /api/admin/routes - valid authenticated request creates route")
     void testCreateRouteSuccess() throws Exception {
-        given(tenantRepository.existsById(TENANT_A)).willReturn(true);
+        given(tenantRepository.existsByIdAndApiKeyAndStatus(TENANT_A, API_KEY_A, "ACTIVE")).willReturn(true);
         given(serviceRepository.existsByIdAndTenantId(SERVICE_ID, TENANT_A)).willReturn(true);
 
         RouteEntity saved = new RouteEntity();
@@ -68,6 +69,7 @@ class RouteControllerTest {
 
         mockMvc.perform(post("/api/admin/routes")
                         .header("X-Tenant-Id", TENANT_A.toString())
+                        .header("X-Api-Key", API_KEY_A)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isCreated())
@@ -78,9 +80,9 @@ class RouteControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/admin/routes - returns routes filtered by X-Tenant-Id")
+    @DisplayName("GET /api/admin/routes - returns routes filtered by authenticated tenant")
     void testListRoutesTenantScoped() throws Exception {
-        given(tenantRepository.existsById(TENANT_A)).willReturn(true);
+        given(tenantRepository.existsByIdAndApiKeyAndStatus(TENANT_A, API_KEY_A, "ACTIVE")).willReturn(true);
 
         RouteEntity route = new RouteEntity();
         route.setId(ROUTE_ID);
@@ -91,7 +93,8 @@ class RouteControllerTest {
         given(routeRepository.findByTenantId(TENANT_A)).willReturn(List.of(route));
 
         mockMvc.perform(get("/api/admin/routes")
-                        .header("X-Tenant-Id", TENANT_A.toString()))
+                        .header("X-Tenant-Id", TENANT_A.toString())
+                        .header("X-Api-Key", API_KEY_A))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].id").value(ROUTE_ID.toString()))

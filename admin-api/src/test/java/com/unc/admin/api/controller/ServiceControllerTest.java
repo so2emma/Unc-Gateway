@@ -40,6 +40,7 @@ class ServiceControllerTest {
     private TenantRepository tenantRepository;
 
     private static final UUID TENANT_A = UUID.fromString("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11");
+    private static final String API_KEY_A = "unc_live_sec_1234567890abcdef";
     private static final UUID SERVICE_ID = UUID.fromString("b1eebc99-9c0b-4ef8-bb6d-6bb9bd380b22");
 
     @Test
@@ -56,9 +57,23 @@ class ServiceControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/admin/services - valid request creates tenant-scoped service")
+    @DisplayName("POST /api/admin/services - missing X-Api-Key header returns 401 Unauthorized")
+    void testCreateServiceMissingApiKey() throws Exception {
+        ServiceDto dto = new ServiceDto();
+        dto.setName("demo-service");
+        dto.setUpstreamUrl("http://mock-upstream:9090");
+
+        mockMvc.perform(post("/api/admin/services")
+                        .header("X-Tenant-Id", TENANT_A.toString())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("POST /api/admin/services - valid authenticated request creates service")
     void testCreateServiceSuccess() throws Exception {
-        given(tenantRepository.existsById(TENANT_A)).willReturn(true);
+        given(tenantRepository.existsByIdAndApiKeyAndStatus(TENANT_A, API_KEY_A, "ACTIVE")).willReturn(true);
 
         ServiceEntity saved = new ServiceEntity();
         saved.setId(SERVICE_ID);
@@ -74,6 +89,7 @@ class ServiceControllerTest {
 
         mockMvc.perform(post("/api/admin/services")
                         .header("X-Tenant-Id", TENANT_A.toString())
+                        .header("X-Api-Key", API_KEY_A)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isCreated())
@@ -84,9 +100,9 @@ class ServiceControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/admin/services - returns services filtered by X-Tenant-Id")
+    @DisplayName("GET /api/admin/services - returns services filtered by authenticated tenant")
     void testListServicesTenantScoped() throws Exception {
-        given(tenantRepository.existsById(TENANT_A)).willReturn(true);
+        given(tenantRepository.existsByIdAndApiKeyAndStatus(TENANT_A, API_KEY_A, "ACTIVE")).willReturn(true);
 
         ServiceEntity srv = new ServiceEntity();
         srv.setId(SERVICE_ID);
@@ -97,7 +113,8 @@ class ServiceControllerTest {
         given(serviceRepository.findByTenantId(TENANT_A)).willReturn(List.of(srv));
 
         mockMvc.perform(get("/api/admin/services")
-                        .header("X-Tenant-Id", TENANT_A.toString()))
+                        .header("X-Tenant-Id", TENANT_A.toString())
+                        .header("X-Api-Key", API_KEY_A))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].id").value(SERVICE_ID.toString()))
@@ -107,13 +124,14 @@ class ServiceControllerTest {
     }
 
     @Test
-    @DisplayName("DELETE /api/admin/services/{id} - deletes service scoped by tenant_id")
+    @DisplayName("DELETE /api/admin/services/{id} - deletes service scoped by tenant")
     void testDeleteServiceSuccess() throws Exception {
-        given(tenantRepository.existsById(TENANT_A)).willReturn(true);
+        given(tenantRepository.existsByIdAndApiKeyAndStatus(TENANT_A, API_KEY_A, "ACTIVE")).willReturn(true);
         given(serviceRepository.existsByIdAndTenantId(SERVICE_ID, TENANT_A)).willReturn(true);
 
         mockMvc.perform(delete("/api/admin/services/" + SERVICE_ID)
-                        .header("X-Tenant-Id", TENANT_A.toString()))
+                        .header("X-Tenant-Id", TENANT_A.toString())
+                        .header("X-Api-Key", API_KEY_A))
                 .andExpect(status().isNoContent());
 
         verify(serviceRepository).deleteByIdAndTenantId(SERVICE_ID, TENANT_A);
