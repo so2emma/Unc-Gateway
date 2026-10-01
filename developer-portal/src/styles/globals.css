@@ -1,0 +1,223 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+/* ===== Ignite Design System — Theme Variables ===== */
+:root {
+  /* Light surface (Developer Portal) */
+  --bg-light: #F7F8FA;
+  --surface-light: #FFFFFF;
+  --ink: #0B0D12;
+  --muted-light: #5B6472;
+  --border-light: #E7E9EC;
+
+  /* Brand accent */
+  --accent: #FF6B35;
+  --accent-hover: #E85A2A;
+  --accent-tint: #FFF1EA;
+  --accent-glow: rgba(255, 107, 53, 0.18);
+  --accent-gradient: linear-gradient(135deg, #FF6B35 0%, #FF9A56 100%);
+
+  /* State colors */
+  --success: #1CAE68;
+  --success-tint: #E7F8EF;
+  --warning: #F5A623;
+  --warning-tint: #FEF3DE;
+  --danger: #E5484D;
+  --danger-tint: #FDECEC;
+
+  /* Radii */
+  --radius-card: 12px;
+  --radius-control: 8px;
+  --radius-pill: 999px;
+
+  /* Soft layered shadows */
+  --shadow-soft: 0 1px 2px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.06);
+  --shadow-lift: 0 4px 12px rgba(255, 107, 53, 0.22);
+
+  /* Typography */
+  --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  min-height: 100%;
+}
+
+body {
+  font-family: var(--font-ui);
+  background-color: var(--bg-light);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Common Layout */
+.container {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+/* Card */
+.card {
+  background: var(--surface-light);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-soft);
+}
+
+/* Buttons */
+.btn {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 14px;
+  border-radius: var(--radius-control);
+  border: none;
+  cursor: pointer;
+  padding: 10px 20px;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #FFFFFF;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), 0 4px 12px var(--accent-glow);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 8px 20px var(--accent-glow);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--border-light);
+  color: var(--ink);
+}
+
+.btn-outline:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+/* Form Controls */
+.field {
+  margin-bottom: 20px;
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted-light);
+  margin-bottom: 6px;
+  display: block;
+}
+
+input, select {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  padding: 11px 16px;
+  border-radius: var(--radius-control);
+  border: 1px solid var(--border-light);
+  background: var(--surface-light);
+  color: var(--ink);
+  width: 100%;
+  transition: all 0.15s ease;
+}
+
+input::placeholder {
+  color: #9CA3AF;
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-tint);
+}
+
+input.input-error {
+  border-color: var(--danger);
+}
+
+input.input-error:focus {
+  box-shadow: 0 0 0 3px var(--danger-tint);
+}
+
+/* Pills & Badges */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.pill-accent {
+  background: var(--accent-tint);
+  color: var(--accent-hover);
+}
+
+.pill-success {
+  background: var(--success-tint);
+  color: var(--success);
+}
+
+.pill-danger {
+  background: var(--danger-tint);
+  color: var(--danger);
+}
+
+/* SVG Icon helper */
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.icon svg {
+  width: 1em;
+  height: 1em;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
