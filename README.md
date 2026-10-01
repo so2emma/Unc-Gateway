@@ -15,8 +15,8 @@ Unc is a high-performance, self-hosted, multi-tenant API Gateway built with Java
   5. `logging`: Non-blocking async request logger.
 - **Zero-Downtime Dynamic Config (Postgres `LISTEN/NOTIFY`)**: Database triggers issue instant notifications upon modifications to services, routes, or plugin configs. `gateway-core` listens via a reactive R2DBC stream to invalidate and reload its in-memory route cache in <1 second without service restarts, backed by a 60s periodic reconciliation poll safety net.
 - **Multi-Tenancy Model**: Shared-schema pool model using a `tenant_id` discriminator column across all tables (`tenants`, `services`, `routes`, `consumers`, `plugin_configs`, `request_logs`).
-- **Developer Portal (`developer-portal`)**: Next.js App Router frontend designed with the **Blueprint** technical theme (`#F0F4F8`, `#16324F`, `#FF6A3D`, IBM Plex Mono) featuring interactive inline schematic endpoint cards (`Request` -> `Route` -> `Response`), self-serve consumer signup, and API key management.
-- **Operator Control Room (`admin-dashboard`)**: Next.js App Router frontend designed with the **Control Room** dark theme (`#211F1E`, `#E8934A`, `#C1502E`, JetBrains Mono) featuring a live scrolling oscilloscope waveform traffic pulse, p95/p99 latency metrics tables, and dense operator CRUD management grids.
+- **Developer Portal (`developer-portal`)**: Next.js App Router frontend designed with the **Ignite** modern orange SaaS theme (background `#F7F8FA`, surface `#FFFFFF`, ink `#0B0D12`, primary accent `#FF6B35`, Inter + JetBrains Mono) featuring interactive inline schematic endpoint cards (`Request` -> `Route` -> `Response`), self-serve consumer signup, and API key management — styled like a modern developer-tool landing/app experience (think Stripe/Vercel-grade polish).
+- **Operator Control Room (`admin-dashboard`)**: Next.js App Router frontend designed with the same **Ignite** design system in its dark operator surface (background `#15171C`, panel `#1C1F26`, border `#2A2E37`, primary accent `#FF6B35`, Inter + JetBrains Mono) featuring a live scrolling oscilloscope waveform traffic pulse, p95/p99 latency metrics tables, and dense operator CRUD management grids — a single cohesive brand across both apps instead of two disconnected visual languages.
 
 ---
 
@@ -30,8 +30,8 @@ unc/
 ├── gateway-core/               # Reactive proxy engine + Postgres LISTEN/NOTIFY invalidator
 ├── admin-api/                  # Spring Boot CRUD REST API + Flyway migrations + DB NOTIFY triggers
 ├── analytics-api/              # Analytics ingestion endpoint & query API
-├── developer-portal/           # Next.js App (Blueprint theme, self-serve keys, schematic cards)
-├── admin-dashboard/            # Next.js App (Control Room dark theme, live traffic pulse)
+├── developer-portal/           # Next.js App (Ignite theme, self-serve keys, schematic cards)
+├── admin-dashboard/            # Next.js App (Ignite theme, dark operator surface, live traffic pulse)
 ├── mock-upstream/              # Mock HTTP upstream echo service for testing
 └── docker-compose.yml          # Containerized local environment orchestrator
 ```
@@ -57,8 +57,8 @@ docker compose up --build
 | **Gateway Core (Proxy)** | `http://localhost:8000` | Main proxied entrypoint for client traffic |
 | **Admin API** | `http://localhost:8081` | REST CRUD management API |
 | **Analytics API** | `http://localhost:8082` | Analytics ingestion & query API |
-| **Developer Portal** | `http://localhost:3000` | Next.js Developer Portal (Blueprint theme) |
-| **Admin Dashboard** | `http://localhost:3001` | Next.js Operator Control Room (Control Room theme) |
+| **Developer Portal** | `http://localhost:3000` | Next.js Developer Portal (Ignite theme) |
+| **Admin Dashboard** | `http://localhost:3001` | Next.js Operator Control Room (Ignite theme, dark surface) |
 | **Mock Upstream** | `http://localhost:9090` | Upstream echo backend |
 | **PostgreSQL** | `localhost:5432` | Main database (`unc_db`) |
 | **Redis** | `localhost:6379` | Rate-limit cache store |
