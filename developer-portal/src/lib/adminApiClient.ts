@@ -118,11 +118,15 @@ export async function createConsumer(
     let errorData: any = null;
     try {
       errorData = await response.json();
-      if (errorData && typeof errorData.message === 'string') {
+      if (errorData && typeof errorData.message === 'string' && errorData.message.trim()) {
         errorMessage = errorData.message;
+      } else if (response.status === 409) {
+        errorMessage = `An account with name "${input.name}" already exists. Please choose a different name.`;
       }
     } catch {
-      // Non-JSON response
+      if (response.status === 409) {
+        errorMessage = `An account with name "${input.name}" already exists. Please choose a different name.`;
+      }
     }
     throw new AdminApiError(errorMessage, response.status, errorData);
   }
