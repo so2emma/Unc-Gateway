@@ -56,5 +56,18 @@ services:
     depends_on:
       - mock-upstream
 
+  developer-portal:
+    build:
+      context: ./developer-portal
+      dockerfile: Dockerfile
+    container_name: unc-developer-portal
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_ADMIN_API_URL: http://admin-api:8081
+    depends_on:
+      - admin-api
+
 volumes:
   postgres_data:
+
