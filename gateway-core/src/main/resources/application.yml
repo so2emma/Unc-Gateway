@@ -4,6 +4,14 @@ server:
 spring:
   application:
     name: gateway-core
+  r2dbc:
+    url: r2dbc:postgresql://${R2DBC_HOST:postgres}:${R2DBC_PORT:5432}/${R2DBC_DATABASE:unc_db}
+    username: ${R2DBC_USER:postgres}
+    password: ${R2DBC_PASSWORD:postgrespassword}
+    pool:
+      enabled: true
+      initial-size: 5
+      max-size: 20
 
 upstream:
   base-url: http://mock-upstream:9090
