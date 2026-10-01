@@ -2,6 +2,7 @@ package com.unc.gateway.core.proxy;
 
 import com.unc.gateway.core.GatewayCoreApplication;
 import com.unc.gateway.core.cache.RouteCache;
+import com.unc.gateway.core.cache.RouteCacheLoader;
 import com.unc.gateway.core.cache.RouteEntry;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
@@ -31,6 +33,9 @@ class ProxyHandlerTest {
 
     @Autowired
     private RouteCache routeCache;
+
+    @MockBean
+    private RouteCacheLoader routeCacheLoader;
 
     private MockWebServer mockWebServer;
 
