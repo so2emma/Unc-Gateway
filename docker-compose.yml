@@ -51,10 +51,16 @@ services:
     ports:
       - "8080:8080"
     environment:
+      SPRING_R2DBC_URL: r2dbc:postgresql://postgres:5432/unc_db
+      SPRING_R2DBC_USERNAME: postgres
+      SPRING_R2DBC_PASSWORD: postgrespassword
       UPSTREAM_BASE_URL: http://mock-upstream:9090
       UPSTREAM_ROUTE_PREFIX: /proxy
     depends_on:
-      - mock-upstream
+      postgres:
+        condition: service_healthy
+      mock-upstream:
+        condition: service_started
 
   developer-portal:
     build:
