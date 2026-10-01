@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Unc — Admin Dashboard: Tenants | Ignite Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="ignite-theme.css">
+<style>
+  .shell { display: flex; min-height: 100vh; }
+  .sidebar { width: 232px; flex-shrink: 0; padding: 20px 14px; }
+  .sidebar .logo { padding: 8px 10px 24px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-control);
+    font-size: 14px; font-weight: 600; color: var(--muted-dark); margin-bottom: 2px;
+  }
+  .nav-item.active { background: rgba(255,107,53,.12); color: var(--accent); }
+  .nav-item .icon { width: 16px; height: 16px; }
+  .nav-section-label { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #5B6472; padding: 16px 12px 6px; }
+
+  .main { flex: 1; display: flex; flex-direction: column; }
+  .topbar { height: 64px; display: flex; align-items: center; justify-content: space-between; padding: 0 28px; }
+  .tenant-switch { display: flex; align-items: center; gap: 10px; font-size: 13.5px; font-weight: 600; }
+  .tenant-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+  .apikey-input {
+    background: var(--surface-dark-raised); border: 1px solid var(--border-dark); border-radius: var(--radius-control);
+    padding: 7px 12px; font-family: var(--font-mono); font-size: 12.5px; color: var(--muted-dark); width: 220px;
+  }
+
+  .content { padding: 28px; flex: 1; }
+  .page-head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; }
+  .page-head h1 { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
+  .page-head p { color: var(--muted-dark); font-size: 13.5px; margin-top: 4px; }
+
+  .grid-panel { overflow: hidden; }
+  .grid-toolbar { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border-dark); }
+  .grid-toolbar input { max-width: 260px; }
+  .filter-chips { display: flex; gap: 6px; }
+  .chip { font-size: 12.5px; font-weight: 600; padding: 5px 12px; border-radius: var(--radius-pill); color: var(--muted-dark); cursor: pointer; }
+  .chip.active { background: var(--accent-tint); color: var(--accent); }
+
+  .id-mono { font-family: var(--font-mono); font-size: 12.5px; color: var(--muted-dark); }
+  .row-actions { display: flex; gap: 6px; justify-content: flex-end; }
+
+  /* Modal mock */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center; z-index: 50;
+  }
+  .modal { width: 460px; padding: 28px; }
+  .modal h2 { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
+  .modal p.sub { font-size: 13px; color: var(--muted-dark); margin-bottom: 20px; }
+  .modal .field { margin-bottom: 20px; }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+  .cred-callout {
+    background: var(--surface-dark-raised); border: 1px solid var(--border-dark); border-radius: var(--radius-control);
+    padding: 14px; display:flex; justify-content:space-between; align-items:center; margin-top: 8px;
+  }
+</style>
+</head>
+<body class="theme-dark">
+<div class="preview-nav" style="background:#fff; color:#0B0D12;">
+  <a href="index.html">← All Previews</a>
+  <a href="admin-services-grid.html">Services Grid</a>
+  <a href="admin-traffic.html">Traffic Pulse</a>
+</div>
+
+<div class="shell">
+  <aside class="sidebar">
+    <div class="logo"><span class="logo-mark"></span>Unc</div>
+    <div class="nav-section-label">Operate</div>
+    <div class="nav-item"><span class="icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span> Services & Routes</div>
+    <div class="nav-item"><span class="icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/></svg></span> Consumers</div>
+    <div class="nav-item"><span class="icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33h0a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51h0a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v0a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></span> Plugin Configs</div>
+    <div class="nav-item active"><span class="icon"><svg viewBox="0 0 24 24"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg></span> Tenants</div>
+    <div class="nav-section-label">Observe</div>
+    <div class="nav-item"><span class="icon"><svg viewBox="0 0 24 24"><polyline points="2 12 7 12 10 20 14 4 17 12 22 12"/></svg></span> Traffic Pulse</div>
+    <div class="nav-item"><span class="icon"><svg viewBox="0 0 24 24"><path d="M4 19h16M4 15h10M4 11h16M4 7h7"/></svg></span> Audit Log</div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="tenant-switch"><span class="tenant-dot"></span> acme-corp <span style="color:var(--muted-dark); font-weight:400;">▾</span></div>
+      <input class="apikey-input mono" value="unc_live_sec_••••a92f" readonly>
+    </div>
+
+    <div class="content">
+      <div class="page-head">
+        <div>
+          <h1>Tenants</h1>
+          <p>Manage organizations provisioned on this gateway and their API credentials.</p>
+        </div>
+        <button class="btn btn-primary" onclick="document.getElementById('createModal').style.display='flex'">+ New Tenant</button>
+      </div>
+
+      <div class="panel grid-panel">
+        <div class="grid-toolbar">
+          <input placeholder="Search tenants...">
+          <div class="filter-chips">
+            <span class="chip active">All</span>
+            <span class="chip">Active</span>
+            <span class="chip">Inactive</span>
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr><th>Name</th><th>Email</th><th>API Key</th><th>Status</th><th>Created</th><th></th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Acme Corp</strong></td>
+              <td class="id-mono">ops@acme.dev</td>
+              <td class="id-mono">unc_live_•••a92f</td>
+              <td><span class="pill pill-success">Active</span></td>
+              <td class="id-mono">Jul 24, 2026</td>
+              <td class="row-actions"><button class="btn btn-ghost btn-sm">Edit</button><button class="btn btn-ghost btn-sm">Delete</button></td>
+            </tr>
+            <tr>
+              <td><strong>Northwind Labs</strong></td>
+              <td class="id-mono">team@northwind.io</td>
+              <td class="id-mono">unc_live_•••71cd</td>
+              <td><span class="pill pill-success">Active</span></td>
+              <td class="id-mono">Aug 02, 2026</td>
+              <td class="row-actions"><button class="btn btn-ghost btn-sm">Edit</button><button class="btn btn-ghost btn-sm">Delete</button></td>
+            </tr>
+            <tr>
+              <td><strong>Globex Industries</strong></td>
+              <td class="id-mono">it@globex.com</td>
+              <td class="id-mono">unc_live_•••0d1e</td>
+              <td><span class="pill pill-muted">Inactive</span></td>
+              <td class="id-mono">Jun 11, 2026</td>
+              <td class="row-actions"><button class="btn btn-ghost btn-sm">Edit</button><button class="btn btn-ghost btn-sm">Delete</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="createModal" style="display:none;">
+  <div class="panel modal">
+    <h2>Create new tenant</h2>
+    <p class="sub">A new API key will be generated automatically on creation.</p>
+    <div class="field">
+      <label class="label">Organization name</label>
+      <input type="text" placeholder="Stark Industries">
+    </div>
+    <div class="field">
+      <label class="label">Admin email</label>
+      <input type="email" placeholder="ops@stark.io">
+    </div>
+    <div class="cred-callout" id="credCallout" style="display:none;">
+      <span class="mono" id="credValue" style="font-size:13px; color:var(--text-dark);">unc_live_sec_8f3a1c9d2e4b7f60</span>
+      <button class="btn btn-outline btn-sm">Copy</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="document.getElementById('createModal').style.display='none'">Cancel</button>
+      <button class="btn btn-primary" onclick="document.getElementById('credCallout').style.display='flex'">Create tenant</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>

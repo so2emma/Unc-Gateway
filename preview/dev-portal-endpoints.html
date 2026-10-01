@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Unc — Endpoint Schematics | Ignite Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="ignite-theme.css">
+<style>
+  .page-head { padding: 40px 0 28px; }
+  .page-head h1 { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 6px; }
+  .page-head p { color: var(--muted-light); font-size: 14.5px; }
+
+  .schematic-card { padding: 28px; margin-bottom: 20px; }
+  .schematic-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .schematic-title { font-weight: 700; font-size: 15px; }
+  .schematic-flow { display: grid; grid-template-columns: 1fr 44px 1fr 44px 1fr; align-items: center; }
+
+  .segment {
+    background: #FFFFFF; border: 1px solid var(--border-light); border-radius: 10px;
+    padding: 18px; min-height: 150px; box-shadow: 0 1px 2px rgba(0,0,0,.03);
+  }
+  .segment-label {
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+    color: var(--muted-light); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;
+  }
+  .segment-body { font-family: var(--font-mono); font-size: 12.5px; line-height: 1.8; color: var(--ink); }
+  .segment-body .k { color: var(--muted-light); }
+  .connector { display: flex; align-items: center; justify-content: center; color: var(--accent); }
+  .connector .icon { width: 24px; height: 24px; }
+  .connector .icon svg { stroke-width: 2.5; }
+
+  .status-200 { color: var(--success); font-weight: 700; }
+  .status-401 { color: var(--danger); font-weight: 700; }
+
+  .route-tag { margin-top: 10px; }
+</style>
+</head>
+<body class="theme-light">
+<div class="preview-nav">
+  <a href="index.html">← All Previews</a>
+  <a href="dev-portal-signup.html">Signup</a>
+  <a href="dev-portal-keys.html">API Keys</a>
+</div>
+
+<nav class="nav">
+  <div class="container" style="display:flex; align-items:center; justify-content:space-between; height:68px;">
+    <div class="logo"><span class="logo-mark"></span>Unc</div>
+    <div style="display:flex; gap:28px; font-size:14px; font-weight:600; color:var(--muted-light);">
+      <a href="#" style="color:var(--accent);">Endpoints</a>
+      <a href="dev-portal-keys.html">API Keys</a>
+    </div>
+    <div class="pill pill-success">● acme-corp</div>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="page-head">
+    <h1>Endpoint Schematics</h1>
+    <p>Live Request → Route → Response topology for every endpoint resolvable with your current API key.</p>
+  </div>
+
+  <div class="card schematic-card">
+    <div class="schematic-top">
+      <div class="schematic-title">GET /api/v1/echo/hello</div>
+      <span class="pill pill-accent">key-auth · rate-limit</span>
+    </div>
+    <div class="schematic-flow">
+      <div class="segment">
+        <div class="segment-label">① Request</div>
+        <div class="segment-body">
+          <div><span class="k">GET</span> /api/v1/echo/hello</div>
+          <div><span class="k">X-Api-Key:</span> unc_•••a92f</div>
+          <div><span class="k">X-Tenant-Id:</span> t1</div>
+        </div>
+      </div>
+      <div class="connector"><span class="icon"><svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></div>
+      <div class="segment">
+        <div class="segment-label">② Route</div>
+        <div class="segment-body">
+          <div><span class="k">service:</span> echo-svc</div>
+          <div><span class="k">upstream:</span> mock-upstream:9090</div>
+          <div><span class="k">matched:</span> /echo/*</div>
+        </div>
+        <div class="route-tag"><span class="pill pill-accent">resolved via gateway-core</span></div>
+      </div>
+      <div class="connector"><span class="icon"><svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></div>
+      <div class="segment">
+        <div class="segment-label">③ Response</div>
+        <div class="segment-body">
+          <div class="status-200">200 OK</div>
+          <div><span class="k">latency:</span> 14ms</div>
+          <div><span class="k">body:</span> {"echo":"hello"}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card schematic-card">
+    <div class="schematic-top">
+      <div class="schematic-title">POST /api/v1/orders</div>
+      <span class="pill pill-danger">key revoked</span>
+    </div>
+    <div class="schematic-flow">
+      <div class="segment">
+        <div class="segment-label">① Request</div>
+        <div class="segment-body">
+          <div><span class="k">POST</span> /api/v1/orders</div>
+          <div><span class="k">X-Api-Key:</span> unc_•••71cd</div>
+          <div><span class="k">X-Tenant-Id:</span> t1</div>
+        </div>
+      </div>
+      <div class="connector"><span class="icon"><svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></div>
+      <div class="segment">
+        <div class="segment-label">② Route</div>
+        <div class="segment-body">
+          <div><span class="k">service:</span> orders-svc</div>
+          <div><span class="k">upstream:</span> mock-upstream:9090</div>
+          <div><span class="k">matched:</span> /orders</div>
+        </div>
+        <div class="route-tag"><span class="pill pill-accent">resolved via gateway-core</span></div>
+      </div>
+      <div class="connector"><span class="icon"><svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></div>
+      <div class="segment">
+        <div class="segment-label">③ Response</div>
+        <div class="segment-body">
+          <div class="status-401">401 Unauthorized</div>
+          <div><span class="k">reason:</span> key_revoked</div>
+          <div><span class="k">filter:</span> key-auth</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

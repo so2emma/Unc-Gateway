@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Unc — Tenant Registration | Ignite Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="ignite-theme.css">
+<style>
+  .hero-wrap { min-height: 100vh; display: flex; flex-direction: column; }
+  .stage { flex: 1; display: flex; align-items: center; justify-content: center; padding: 60px 24px; }
+  .reg-card { width: 460px; padding: 40px; }
+  h1.headline { font-size: 25px; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 8px; }
+  .sub { color: var(--muted-light); font-size: 14.5px; margin-bottom: 26px; line-height: 1.5; }
+  .field { margin-bottom: 20px; }
+  .cred-panel {
+    background: var(--ink); border-radius: var(--radius-control); padding: 18px;
+    margin-top: 10px; color: #fff;
+  }
+  .cred-row { display:flex; justify-content:space-between; align-items:center; padding: 8px 0; }
+  .cred-row + .cred-row { border-top: 1px solid rgba(255,255,255,.1); }
+  .cred-k { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #B6BCC8; }
+  .cred-v { font-family: var(--font-mono); font-size: 13px; font-weight: 600; }
+</style>
+</head>
+<body class="theme-light">
+<div class="preview-nav">
+  <a href="index.html">← All Previews</a>
+  <a href="admin-tenants.html">Admin Tenants Grid</a>
+</div>
+
+<div class="hero-wrap">
+  <nav class="nav">
+    <div class="container" style="display:flex; align-items:center; justify-content:space-between; height:68px;">
+      <div class="logo"><span class="logo-mark"></span>Unc</div>
+      <a href="#" class="btn btn-outline btn-sm">Sign in</a>
+    </div>
+  </nav>
+  <div class="stage">
+    <div class="card reg-card">
+      <span class="pill pill-accent" style="margin-bottom:16px;"><span class="icon" style="width:12px;height:12px;"><svg viewBox="0 0 24 24"><path d="M12 2l1.5 6.5L20 10l-6.5 1.5L12 18l-1.5-6.5L4 10l6.5-1.5z"/></svg></span> Organization setup</span>
+      <h1 class="headline">Register your organization</h1>
+      <p class="sub">Create a tenant workspace to start managing services, routes, and consumers under your own namespace.</p>
+      <div class="field">
+        <label class="label">Organization name</label>
+        <input type="text" placeholder="Acme Corp">
+      </div>
+      <div class="field">
+        <label class="label">Admin email</label>
+        <input type="email" placeholder="ops@acme.dev">
+      </div>
+      <button class="btn btn-primary" style="width:100%; justify-content:center; padding:13px; margin-bottom: 6px;">Create organization →</button>
+
+      <div class="cred-panel">
+        <div style="font-size:12px; font-weight:700; color: #FF9A56; margin-bottom:8px; display:flex; align-items:center; gap:6px;"><span class="icon" style="width:13px;height:13px;"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span> TENANT CREATED — SAVE THESE CREDENTIALS</div>
+        <div class="cred-row">
+          <span class="cred-k">Tenant ID</span>
+          <span class="cred-v">t_8f3a1c9d</span>
+        </div>
+        <div class="cred-row">
+          <span class="cred-k">API Key</span>
+          <span class="cred-v">unc_live_sec_8f3a1c9d2e4b</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

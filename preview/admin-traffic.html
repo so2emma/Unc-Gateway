@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Unc — Admin Dashboard: Traffic Pulse | Ignite Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="ignite-theme.css">
+<style>
+  .shell { display: flex; min-height: 100vh; }
+  .sidebar { width: 232px; flex-shrink: 0; padding: 20px 14px; }
+  .sidebar .logo { padding: 8px 10px 24px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-control);
+    font-size: 14px; font-weight: 600; color: var(--muted-dark); margin-bottom: 2px;
+  }
+  .nav-item.active { background: rgba(255,107,53,.12); color: var(--accent); }
+  .nav-item .icon { width: 16px; height: 16px; }
+  .nav-section-label { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #5B6472; padding: 16px 12px 6px; }
+
+  .main { flex: 1; display: flex; flex-direction: column; }
+  .topbar { height: 64px; display: flex; align-items: center; justify-content: space-between; padding: 0 28px; }
+  .tenant-switch { display: flex; align-items: center; gap: 10px; font-size: 13.5px; font-weight: 600; }
+  .tenant-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+  .apikey-input {
+    background: var(--surface-dark-raised); border: 1px solid var(--border-dark); border-radius: var(--radius-control);
+    padding: 7px 12px; font-family: var(--font-mono); font-size: 12.5px; color: var(--muted-dark); width: 220px;
+  }
+
+  .content { padding: 28px; flex: 1; }
+  .page-head h1 { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
+  .page-head p { color: var(--muted-dark); font-size: 13.5px; margin-top: 4px; margin-bottom: 20px; }
+
+  .wave-panel { padding: 28px; margin-bottom: 24px; }
+  .wave-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+  .wave-title { font-weight: 700; font-size: 15px; }
+  .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); display:inline-block; margin-right:6px;
+    box-shadow: 0 0 0 0 rgba(28,174,104,.5); animation: pulse 1.6s infinite; }
+  @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(28,174,104,.5);} 70%{box-shadow:0 0 0 6px rgba(28,174,104,0);} 100%{box-shadow:0 0 0 0 rgba(28,174,104,0);} }
+
+  .scope-wrap { position: relative; height: 220px; border-radius: 10px; overflow: hidden;
+    background: repeating-linear-gradient(90deg, rgba(255,255,255,.03) 0 1px, transparent 1px 48px),
+                repeating-linear-gradient(0deg, rgba(255,255,255,.03) 0 1px, transparent 1px 36px),
+                var(--surface-dark-raised); }
+
+  .metrics-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 24px; }
+  .metric-card { padding: 22px; }
+  .metric-label { font-size: 12px; color: var(--muted-dark); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 10px; }
+  .metric-value { font-size: 28px; font-weight: 800; font-family: var(--font-mono); }
+  .metric-value.warn { color: var(--warning); }
+  .metric-sub { font-size: 12px; color: var(--muted-dark); margin-top: 6px; }
+
+  .lat-panel { padding: 0; overflow: hidden; }
+  .lat-head { padding: 18px 20px; border-bottom: 1px solid var(--border-dark); font-weight: 700; font-size: 15px; }
+</style>
+</head>
+<body class="theme-dark">
+<div class="preview-nav" style="background:#fff; color:#0B0D12;">
+  <a href="index.html">← All Previews</a>
+  <a href="admin-services-grid.html">Services Grid</a>
+  <a href="admin-tenants.html">Tenants</a>
+</div>
+
+<div class="shell">
+  <aside class="sidebar">
+    <div class="logo"><span class="logo-mark"></span>Unc</div>
+    <div class="nav-section-label">Operate</div>
+    <div class="nav-item"><span class="icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span> Services & Routes</div>
+    <div class="nav-item"><span class="icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/></svg></span> Consumers</div>
+    <div class="nav-item"><span class="icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33h0a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51h0a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v0a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></span> Plugin Configs</div>
+    <div class="nav-item"><span class="icon"><svg viewBox="0 0 24 24"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg></span> Tenants</div>
+    <div class="nav-section-label">Observe</div>
+    <div class="nav-item active"><span class="icon"><svg viewBox="0 0 24 24"><polyline points="2 12 7 12 10 20 14 4 17 12 22 12"/></svg></span> Traffic Pulse</div>
+    <div class="nav-item"><span class="icon"><svg viewBox="0 0 24 24"><path d="M4 19h16M4 15h10M4 11h16M4 7h7"/></svg></span> Audit Log</div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="tenant-switch"><span class="tenant-dot"></span> acme-corp <span style="color:var(--muted-dark); font-weight:400;">▾</span></div>
+      <input class="apikey-input mono" value="unc_live_sec_••••a92f" readonly>
+    </div>
+
+    <div class="content">
+      <div class="page-head">
+        <h1>Traffic Pulse</h1>
+        <p>Real-time request volume and tail-latency health across the gateway.</p>
+      </div>
+
+      <div class="metrics-row">
+        <div class="panel metric-card">
+          <div class="metric-label">Requests / sec</div>
+          <div class="metric-value">842</div>
+          <div class="metric-sub">+6.2% vs last min</div>
+        </div>
+        <div class="panel metric-card">
+          <div class="metric-label">p95 Latency</div>
+          <div class="metric-value">38ms</div>
+          <div class="metric-sub">stable</div>
+        </div>
+        <div class="panel metric-card">
+          <div class="metric-label">p99 Latency</div>
+          <div class="metric-value warn">412ms</div>
+          <div class="metric-sub">⚠ above 200ms threshold</div>
+        </div>
+        <div class="panel metric-card">
+          <div class="metric-label">Error rate</div>
+          <div class="metric-value" style="font-size:28px; color:var(--text-dark);">0.42%</div>
+          <div class="metric-sub">12 errors / 2,860 req</div>
+        </div>
+      </div>
+
+      <div class="panel wave-panel">
+        <div class="wave-head">
+          <div class="wave-title"><span class="live-dot"></span>Live request volume</div>
+          <span class="pill pill-accent">GET /api/analytics/traffic-pulse</span>
+        </div>
+        <div class="scope-wrap">
+          <svg width="100%" height="220" viewBox="0 0 1000 220" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="waveFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#FF6B35" stop-opacity="0.35"/>
+                <stop offset="100%" stop-color="#FF6B35" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <path d="M0,160 L40,140 L80,150 L120,100 L160,130 L200,90 L240,120 L280,70 L320,110 L360,60 L400,95 L440,50 L480,85 L520,40 L560,75 L600,45 L640,90 L680,55 L720,100 L760,65 L800,110 L840,80 L880,120 L920,95 L960,130 L1000,105 L1000,220 L0,220 Z" fill="url(#waveFill)"/>
+            <path d="M0,160 L40,140 L80,150 L120,100 L160,130 L200,90 L240,120 L280,70 L320,110 L360,60 L400,95 L440,50 L480,85 L520,40 L560,75 L600,45 L640,90 L680,55 L720,100 L760,65 L800,110 L840,80 L880,120 L920,95 L960,130 L1000,105" fill="none" stroke="#FF6B35" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="panel lat-panel">
+        <div class="lat-head">p95 / p99 Latency — by route</div>
+        <table>
+          <thead><tr><th>Route</th><th>p50</th><th>p95</th><th>p99</th><th>Samples</th></tr></thead>
+          <tbody>
+            <tr><td class="id-mono mono">GET /echo/*</td><td class="mono">8ms</td><td class="mono">22ms</td><td class="mono">41ms</td><td class="mono">12,402</td></tr>
+            <tr><td class="id-mono mono">POST /orders</td><td class="mono">31ms</td><td class="mono">88ms</td><td class="mono" style="color:var(--warning); font-weight:700;">412ms</td><td class="mono">4,018</td></tr>
+            <tr><td class="id-mono mono">GET /billing/invoices</td><td class="mono">19ms</td><td class="mono">54ms</td><td class="mono">97ms</td><td class="mono">2,215</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
