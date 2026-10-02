@@ -29,6 +29,7 @@ public class RateLimitFilter implements GatewayFilter {
     private final Long defaultLimit;
     private final Long defaultWindowSeconds;
 
+    @org.springframework.beans.factory.annotation.Autowired
     public RateLimitFilter(RedisSlidingWindowRateLimiter rateLimiter) {
         this(rateLimiter, null, null);
     }

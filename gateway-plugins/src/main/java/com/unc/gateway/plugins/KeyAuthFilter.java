@@ -28,6 +28,7 @@ public class KeyAuthFilter implements GatewayFilter {
     private final List<String> defaultKeyNames;
     private final boolean defaultHideCredentials;
 
+    @org.springframework.beans.factory.annotation.Autowired
     public KeyAuthFilter(ConsumerKeyLookup consumerKeyLookup) {
         this(consumerKeyLookup, KeyAuthConfigSchema.DEFAULT_KEY_NAMES, false);
     }

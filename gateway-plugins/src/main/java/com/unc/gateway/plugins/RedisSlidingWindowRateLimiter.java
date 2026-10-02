@@ -68,7 +68,9 @@ public class RedisSlidingWindowRateLimiter {
         this(null, clock);
     }
 
-    public RedisSlidingWindowRateLimiter(ReactiveRedisTemplate<String, String> redisTemplate) {
+    @org.springframework.beans.factory.annotation.Autowired
+    public RedisSlidingWindowRateLimiter(
+            @org.springframework.beans.factory.annotation.Autowired(required = false) ReactiveRedisTemplate<String, String> redisTemplate) {
         this(redisTemplate, Clock.systemUTC());
     }
 
