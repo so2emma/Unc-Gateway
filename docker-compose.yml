@@ -43,6 +43,17 @@ services:
       - "9090:9090"
       - "8085:9090"
 
+  redis:
+    image: redis:7-alpine
+    container_name: unc-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+
   gateway-core:
     build:
       context: .
@@ -54,10 +65,14 @@ services:
       SPRING_R2DBC_URL: r2dbc:postgresql://postgres:5432/unc_db
       SPRING_R2DBC_USERNAME: postgres
       SPRING_R2DBC_PASSWORD: postgrespassword
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
       UPSTREAM_BASE_URL: http://mock-upstream:9090
       UPSTREAM_ROUTE_PREFIX: /proxy
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
       mock-upstream:
         condition: service_started

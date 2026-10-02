@@ -12,6 +12,10 @@ spring:
       enabled: true
       initial-size: 5
       max-size: 20
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:redis}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
 
 upstream:
   base-url: http://mock-upstream:9090
