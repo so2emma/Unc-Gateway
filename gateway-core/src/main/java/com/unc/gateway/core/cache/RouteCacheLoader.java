@@ -50,6 +50,19 @@ public class RouteCacheLoader implements ApplicationRunner {
             WHERE r.id = :routeId
             """;
 
+    static final String SELECT_ROUTES_BY_SERVICE_ID_SQL = """
+            SELECT
+                r.id AS route_id,
+                r.service_id AS service_id,
+                COALESCE(r.tenant_id, s.tenant_id) AS tenant_id,
+                r.paths AS paths,
+                COALESCE(r.strip_path, TRUE) AS strip_path,
+                s.url AS upstream_url
+            FROM routes r
+            JOIN services s ON r.service_id = s.id
+            WHERE r.service_id = :serviceId
+            """;
+
     private final DatabaseClient databaseClient;
     private final RouteCache routeCache;
 
@@ -96,6 +109,30 @@ public class RouteCacheLoader implements ApplicationRunner {
                 .bind("routeId", routeId)
                 .map(this::mapRow)
                 .one();
+    }
+
+    /**
+     * Reloads all expanded route entries for a given route ID.
+     */
+    public Mono<List<RouteEntry>> loadRoutesByRouteId(UUID routeId) {
+        return databaseClient.sql(SELECT_ROUTE_BY_ID_SQL)
+                .bind("routeId", routeId)
+                .map(this::mapRow)
+                .all()
+                .flatMap(this::expandPaths)
+                .collectList();
+    }
+
+    /**
+     * Reloads all expanded route entries attached to a given service ID.
+     */
+    public Mono<List<RouteEntry>> loadRoutesByServiceId(UUID serviceId) {
+        return databaseClient.sql(SELECT_ROUTES_BY_SERVICE_ID_SQL)
+                .bind("serviceId", serviceId)
+                .map(this::mapRow)
+                .all()
+                .flatMap(this::expandPaths)
+                .collectList();
     }
 
     RouteEntry mapRow(Row row, RowMetadata metadata) {

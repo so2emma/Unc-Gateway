@@ -53,12 +53,25 @@ public class RouteCache {
 
     /**
      * Adds or updates a single route entry in the cache.
+     * If the entry replaces an existing routeId with a different path,
+     * the stale path entry is removed automatically.
      *
      * @param entry the route entry to put
      */
     public void put(RouteEntry entry) {
         if (entry == null) {
             return;
+        }
+        if (entry.routeId() != null) {
+            RouteKey oldKey = routeIdIndex.get(entry.routeId());
+            if (oldKey != null) {
+                RouteKey newKey = new RouteKey(entry.path(), entry.tenantId());
+                if (!oldKey.equals(newKey)) {
+                    routes.computeIfPresent(oldKey, (k, existing) ->
+                            Objects.equals(existing.routeId(), entry.routeId()) ? null : existing
+                    );
+                }
+            }
         }
         RouteKey key = new RouteKey(entry.path(), entry.tenantId());
         routes.put(key, entry);
@@ -78,8 +91,31 @@ public class RouteCache {
         }
         RouteKey key = routeIdIndex.remove(routeId);
         if (key != null) {
-            routes.remove(key);
+            routes.computeIfPresent(key, (k, existing) ->
+                    Objects.equals(existing.routeId(), routeId) ? null : existing
+            );
         }
+        routes.entrySet().removeIf(e -> Objects.equals(e.getValue().routeId(), routeId));
+    }
+
+    /**
+     * Evicts all route entries associated with a given service ID.
+     *
+     * @param serviceId the service ID whose routes should be evicted
+     */
+    public void evictByServiceId(UUID serviceId) {
+        if (serviceId == null) {
+            return;
+        }
+        routes.entrySet().removeIf(e -> {
+            if (Objects.equals(e.getValue().serviceId(), serviceId)) {
+                if (e.getValue().routeId() != null) {
+                    routeIdIndex.remove(e.getValue().routeId());
+                }
+                return true;
+            }
+            return false;
+        });
     }
 
     /**
