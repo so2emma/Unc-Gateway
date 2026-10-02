@@ -30,6 +30,7 @@ class V4ConsumerKeysMigrationTest {
         Flyway flyway = Flyway.configure()
                 .dataSource(H2_URL, USER, PASSWORD)
                 .locations("classpath:db/migration")
+                .target("5")
                 .load();
 
         flyway.migrate();
