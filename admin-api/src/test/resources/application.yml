@@ -11,3 +11,4 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+    target: '5'

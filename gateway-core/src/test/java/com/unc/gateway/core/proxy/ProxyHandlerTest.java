@@ -1,7 +1,9 @@
 package com.unc.gateway.core.proxy;
 
 import com.unc.gateway.core.GatewayCoreApplication;
-import com.unc.gateway.core.config.StaticRouteConfig;
+import com.unc.gateway.core.cache.RouteCache;
+import com.unc.gateway.core.cache.RouteCacheLoader;
+import com.unc.gateway.core.cache.RouteEntry;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
@@ -17,9 +19,10 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.BDDMockito.given;
 
 @SpringBootTest(classes = GatewayCoreApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureWebTestClient
@@ -28,8 +31,11 @@ class ProxyHandlerTest {
     @Autowired
     private WebTestClient webTestClient;
 
+    @Autowired
+    private RouteCache routeCache;
+
     @MockBean
-    private StaticRouteConfig staticRouteConfig;
+    private RouteCacheLoader routeCacheLoader;
 
     private MockWebServer mockWebServer;
 
@@ -38,8 +44,10 @@ class ProxyHandlerTest {
         mockWebServer = new MockWebServer();
         mockWebServer.start();
 
-        given(staticRouteConfig.getRoutePrefix()).willReturn("/proxy");
-        given(staticRouteConfig.getUpstreamBaseUrl()).willReturn(mockWebServer.url("").toString().replaceAll("/$", ""));
+        String upstreamUrl = mockWebServer.url("/echo").toString().replaceAll("/$", "");
+        routeCache.bulkReplace(List.of(
+                new RouteEntry("/proxy", UUID.randomUUID(), upstreamUrl)
+        ));
     }
 
     @AfterEach

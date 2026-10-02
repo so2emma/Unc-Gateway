@@ -51,10 +51,32 @@ services:
     ports:
       - "8080:8080"
     environment:
+      SPRING_R2DBC_URL: r2dbc:postgresql://postgres:5432/unc_db
+      SPRING_R2DBC_USERNAME: postgres
+      SPRING_R2DBC_PASSWORD: postgrespassword
       UPSTREAM_BASE_URL: http://mock-upstream:9090
       UPSTREAM_ROUTE_PREFIX: /proxy
     depends_on:
-      - mock-upstream
+      postgres:
+        condition: service_healthy
+      mock-upstream:
+        condition: service_started
+
+  developer-portal:
+    build:
+      context: ./developer-portal
+      dockerfile: Dockerfile
+    container_name: unc-developer-portal
+    ports:
+      - "3000:3000"
+    environment:
+      ADMIN_API_URL: http://admin-api:8081
+      NEXT_PUBLIC_ADMIN_API_URL: http://admin-api:8081
+      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-}
+      DEFAULT_ADMIN_API_KEY: ${DEFAULT_ADMIN_API_KEY:-}
+    depends_on:
+      - admin-api
 
 volumes:
   postgres_data:
+

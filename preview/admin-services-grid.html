@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Unc — Admin Dashboard: Services & Routes | Ignite Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="ignite-theme.css">
+<style>
+  .shell { display: flex; min-height: 100vh; }
+  .sidebar { width: 232px; flex-shrink: 0; padding: 20px 14px; display: flex; flex-direction: column; }
+  .sidebar .logo { padding: 8px 10px 24px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-control);
+    font-size: 14px; font-weight: 600; color: var(--muted-dark); margin-bottom: 2px; cursor: pointer;
+  }
+  .nav-item.active { background: rgba(255,107,53,.12); color: var(--accent); }
+  .nav-item:hover:not(.active) { background: rgba(255,255,255,.04); color: var(--text-dark); }
+  .nav-item .icon { width: 16px; height: 16px; }
+  .nav-section-label { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #5B6472; padding: 16px 12px 6px; }
+
+  .main { flex: 1; display: flex; flex-direction: column; }
+  .topbar { height: 64px; display: flex; align-items: center; justify-content: space-between; padding: 0 28px; }
+  .tenant-switch { display: flex; align-items: center; gap: 10px; font-size: 13.5px; font-weight: 600; }
+  .tenant-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+  .apikey-input {
+    background: var(--surface-dark-raised); border: 1px solid var(--border-dark); border-radius: var(--radius-control);
+    padding: 7px 12px; font-family: var(--font-mono); font-size: 12.5px; color: var(--muted-dark); width: 220px;
+  }
+
+  .content { padding: 28px; flex: 1; }
+  .page-head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; }
+  .page-head h1 { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
+  .page-head p { color: var(--muted-dark); font-size: 13.5px; margin-top: 4px; }
+
+  .tabs { display: flex; gap: 4px; margin-bottom: 18px; }
+  .tab { padding: 8px 16px; border-radius: var(--radius-control); font-size: 13.5px; font-weight: 600; color: var(--muted-dark); cursor: pointer; }
+  .tab.active { background: var(--surface-dark); color: var(--text-dark); }
+
+  .grid-panel { overflow: hidden; }
+  .grid-toolbar { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border-dark); }
+  .grid-toolbar input { max-width: 260px; }
+
+  .id-mono { font-family: var(--font-mono); font-size: 12.5px; color: var(--muted-dark); }
+  .row-actions { display: flex; gap: 6px; justify-content: flex-end; }
+</style>
+</head>
+<body class="theme-dark">
+<div class="preview-nav" style="background:#fff; color:#0B0D12;">
+  <a href="index.html">← All Previews</a>
+  <a href="admin-traffic.html">Traffic Pulse</a>
+  <a href="admin-tenants.html">Tenants</a>
+</div>
+
+<div class="shell">
+  <aside class="sidebar">
+    <div class="logo"><span class="logo-mark"></span>Unc</div>
+    <div class="nav-section-label">Operate</div>
+    <div class="nav-item active"><span class="icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span> Services & Routes</div>
+    <div class="nav-item"><span class="icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/></svg></span> Consumers</div>
+    <div class="nav-item"><span class="icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33h0a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51h0a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v0a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></span> Plugin Configs</div>
+    <div class="nav-item"><span class="icon"><svg viewBox="0 0 24 24"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg></span> Tenants</div>
+    <div class="nav-section-label">Observe</div>
+    <div class="nav-item"><span class="icon"><svg viewBox="0 0 24 24"><polyline points="2 12 7 12 10 20 14 4 17 12 22 12"/></svg></span> Traffic Pulse</div>
+    <div class="nav-item"><span class="icon"><svg viewBox="0 0 24 24"><path d="M4 19h16M4 15h10M4 11h16M4 7h7"/></svg></span> Audit Log</div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="tenant-switch"><span class="tenant-dot"></span> acme-corp <span style="color:var(--muted-dark); font-weight:400;">▾</span></div>
+      <input class="apikey-input mono" value="unc_live_sec_••••a92f" readonly>
+    </div>
+
+    <div class="content">
+      <div class="page-head">
+        <div>
+          <h1>Services & Routes</h1>
+          <p>Dense operator CRUD grid against live admin-api endpoints.</p>
+        </div>
+        <button class="btn btn-primary">+ New Service</button>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active">Services (4)</div>
+        <div class="tab">Routes (11)</div>
+      </div>
+
+      <div class="panel grid-panel">
+        <div class="grid-toolbar">
+          <input placeholder="Search services...">
+          <span style="font-size:12.5px; color:var(--muted-dark);">Showing 4 of 4</span>
+        </div>
+        <table>
+          <thead>
+            <tr><th>Name</th><th>Upstream</th><th>Routes</th><th>Status</th><th>Updated</th><th></th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>echo-svc</strong></td>
+              <td class="id-mono">mock-upstream:9090</td>
+              <td>3</td>
+              <td><span class="pill pill-success">Healthy</span></td>
+              <td class="id-mono">2m ago</td>
+              <td class="row-actions"><button class="btn btn-ghost btn-sm">Edit</button><button class="btn btn-ghost btn-sm">Delete</button></td>
+            </tr>
+            <tr>
+              <td><strong>orders-svc</strong></td>
+              <td class="id-mono">orders-upstream:8080</td>
+              <td>4</td>
+              <td><span class="pill pill-success">Healthy</span></td>
+              <td class="id-mono">14m ago</td>
+              <td class="row-actions"><button class="btn btn-ghost btn-sm">Edit</button><button class="btn btn-ghost btn-sm">Delete</button></td>
+            </tr>
+            <tr>
+              <td><strong>billing-svc</strong></td>
+              <td class="id-mono">billing-upstream:8443</td>
+              <td>2</td>
+              <td><span class="pill pill-warning">Degraded</span></td>
+              <td class="id-mono">1h ago</td>
+              <td class="row-actions"><button class="btn btn-ghost btn-sm">Edit</button><button class="btn btn-ghost btn-sm">Delete</button></td>
+            </tr>
+            <tr>
+              <td><strong>legacy-svc</strong></td>
+              <td class="id-mono">legacy-upstream:9000</td>
+              <td>2</td>
+              <td><span class="pill pill-danger">Down</span></td>
+              <td class="id-mono">3h ago</td>
+              <td class="row-actions"><button class="btn btn-ghost btn-sm">Edit</button><button class="btn btn-ghost btn-sm">Delete</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="label" style="margin:24px 0 10px;">Loading state reference (shown while fetching from admin-api)</div>
+      <div class="panel grid-panel">
+        <table>
+          <tbody>
+            <tr><td colspan="6" style="padding:16px 20px;"><div class="skeleton" style="height:16px; width:70%;"></div></td></tr>
+            <tr><td colspan="6" style="padding:16px 20px;"><div class="skeleton" style="height:16px; width:85%;"></div></td></tr>
+            <tr><td colspan="6" style="padding:16px 20px; border-bottom:none;"><div class="skeleton" style="height:16px; width:55%;"></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="label" style="margin:24px 0 10px;">Empty state reference (shown when no services exist yet)</div>
+      <div class="panel grid-panel">
+        <div class="empty-state">
+          <span class="icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>
+          <h3>No services registered</h3>
+          <p>Create your first service to start routing traffic through the gateway.</p>
+          <button class="btn btn-primary btn-sm">+ New Service</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

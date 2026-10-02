@@ -18,6 +18,13 @@
     <description>Spring Boot CRUD REST API + Flyway migrations + DB NOTIFY triggers</description>
 
     <dependencies>
+        <!-- PluginRegistry + per-plugin config schema contracts used to validate plugin-config payloads -->
+        <dependency>
+            <groupId>com.unc</groupId>
+            <artifactId>gateway-plugins-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>

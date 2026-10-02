@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Unc — Developer Portal Signup | Ignite Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="ignite-theme.css">
+<style>
+  .hero-wrap { min-height: 100vh; display: flex; flex-direction: column; }
+  .signup-stage {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    padding: 60px 24px; position: relative; overflow: hidden;
+  }
+  .signup-stage::before {
+    content: ''; position: absolute; top: -200px; right: -200px;
+    width: 500px; height: 500px; border-radius: 50%;
+    background: radial-gradient(circle, var(--accent-tint) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .signup-card { width: 440px; padding: 36px; position: relative; z-index: 1; }
+  .badge-top {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 700; color: var(--accent-hover);
+    background: var(--accent-tint); padding: 5px 12px; border-radius: var(--radius-pill);
+    margin-bottom: 20px;
+  }
+  h1.headline { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 8px; }
+  .sub { color: var(--muted-light); font-size: 14.5px; margin-bottom: 28px; line-height: 1.5; }
+  .field { margin-bottom: 20px; }
+  .submit-btn { width: 100%; justify-content: center; padding: 13px; font-size: 15px; margin-top: 8px; }
+  .fine-print { text-align: center; font-size: 12.5px; color: var(--muted-light); margin-top: 22px; }
+  .success-view { display: none; text-align: center; padding: 8px 0; animation: fadeUp .35s ease; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  .success-icon {
+    width: 56px; height: 56px; border-radius: 50%; background: var(--success-tint);
+    color: var(--success); display: flex; align-items: center; justify-content: center;
+    font-size: 26px; margin: 0 auto 20px;
+  }
+  footer.foot { text-align: center; padding: 24px; color: var(--muted-light); font-size: 12.5px; }
+</style>
+</head>
+<body class="theme-light">
+<div class="preview-nav">
+  <a href="index.html">← All Previews</a>
+  <a href="dev-portal-endpoints.html">Endpoint Cards</a>
+  <a href="dev-portal-keys.html">API Keys</a>
+</div>
+
+<div class="hero-wrap">
+  <nav class="nav">
+    <div class="container" style="display:flex; align-items:center; justify-content:space-between; height:68px;">
+      <div class="logo"><span class="logo-mark"></span>Unc</div>
+      <div style="display:flex; gap:28px; font-size:14px; font-weight:600; color:var(--muted-light);">
+        <a href="#">Docs</a>
+        <a href="#">Endpoints</a>
+        <a href="#">API Keys</a>
+      </div>
+      <a href="#" class="btn btn-outline btn-sm">Sign in</a>
+    </div>
+  </nav>
+
+  <div class="signup-stage">
+    <div class="card signup-card">
+      <div class="form-view">
+        <span class="badge-top"><span class="icon" style="width:12px;height:12px;"><svg viewBox="0 0 24 24"><path d="M12 2l1.5 6.5L20 10l-6.5 1.5L12 18l-1.5-6.5L4 10l6.5-1.5z"/></svg></span> Self-serve onboarding</span>
+        <h1 class="headline">Create your developer account</h1>
+        <p class="sub">Spin up API credentials in seconds and start routing requests through Unc Gateway — no approval queue, no sales call.</p>
+
+        <form onsubmit="return showSuccess(event)">
+          <div class="field">
+            <label class="label">Full name</label>
+            <input type="text" placeholder="Ada Lovelace" required>
+          </div>
+          <div class="field">
+            <label class="label">Work email</label>
+            <input type="email" placeholder="ada@acme.dev" required>
+          </div>
+          <div class="field">
+            <label class="label">Organization</label>
+            <input type="text" placeholder="Acme Corp" required>
+          </div>
+          <button type="submit" class="btn btn-primary submit-btn">Create account →</button>
+        </form>
+        <p class="fine-print">By continuing, you agree to Unc's Terms & API Usage Policy.</p>
+      </div>
+
+      <div class="success-view" id="successView">
+        <div class="success-icon"><span class="icon" style="width:24px;height:24px;"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span></div>
+        <h1 class="headline" style="text-align:center;">You're all set, Ada</h1>
+        <p class="sub" style="text-align:center;">Your consumer account was created. Head to <strong>API Keys</strong> to issue your first credential.</p>
+        <a href="dev-portal-keys.html" class="btn btn-primary submit-btn" style="text-decoration:none;">Go to API Keys →</a>
+      </div>
+    </div>
+  </div>
+  <footer class="foot">Unc Gateway · Developer Portal · Ignite Design System</footer>
+</div>
+
+<script>
+function showSuccess(e) {
+  e.preventDefault();
+  document.querySelector('.form-view').style.display = 'none';
+  document.getElementById('successView').style.display = 'block';
+  return false;
+}
+</script>
+</body>
+</html>
