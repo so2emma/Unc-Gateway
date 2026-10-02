@@ -16,3 +16,16 @@ spring:
 upstream:
   base-url: http://mock-upstream:9090
   route-prefix: /proxy
+
+gateway:
+  listener:
+    enabled: true
+    channels:
+      - services_changed
+      - routes_changed
+      - plugin_configs_changed
+    reconnect:
+      initial-delay: 500ms
+      max-delay: 30s
+      max-attempts: -1
+
