@@ -83,15 +83,23 @@ public final class BuiltInPluginSchemas {
         }
     }
 
-    /** {@code rate-limit}: requires positive integers {@code limit} and {@code window_seconds}. */
+    /** {@code rate-limit}: requires positive integers {@code limit} and {@code window_seconds} (or {@code windowSeconds}). */
     static void validateRateLimit(Map<String, Object> config) {
         if (config == null || config.isEmpty()) {
             throw new IllegalArgumentException(
                     "rate-limit: 'limit' and 'window_seconds' are required positive integers");
         }
-        rejectUnknownKeys(RATE_LIMIT, config, Set.of("limit", "window_seconds", "policy"));
+        rejectUnknownKeys(RATE_LIMIT, config, Set.of("limit", "window_seconds", "windowSeconds", "policy"));
         requirePositiveInt(RATE_LIMIT, config, "limit");
-        requirePositiveInt(RATE_LIMIT, config, "window_seconds");
+        if (!config.containsKey("window_seconds") && !config.containsKey("windowSeconds")) {
+            throw new IllegalArgumentException("rate-limit: 'window_seconds' must be a positive integer");
+        }
+        if (config.containsKey("window_seconds")) {
+            requirePositiveInt(RATE_LIMIT, config, "window_seconds");
+        }
+        if (config.containsKey("windowSeconds")) {
+            requirePositiveInt(RATE_LIMIT, config, "windowSeconds");
+        }
     }
 
     /** {@code jwt-auth}: requires {@code secret} or {@code public_key}; optional {@code algorithm}. */
