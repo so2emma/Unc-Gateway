@@ -53,7 +53,8 @@ async function handleGatewayProxy(req: NextRequest, { params }: { params: { path
       }
     });
 
-    const data = await backendRes.text();
+    const isBodylessStatus = backendRes.status === 204 || backendRes.status === 205 || backendRes.status === 304;
+    const data = isBodylessStatus ? null : await backendRes.text();
     return new NextResponse(data, {
       status: backendRes.status,
       headers: responseHeaders,
