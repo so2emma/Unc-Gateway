@@ -217,10 +217,286 @@ export async function getConsumer(id: string, options?: AdminApiClientOptions): 
   return response.json();
 }
 
+export interface ConsumerKey {
+  id: string;
+  tenantId?: string;
+  consumerId: string;
+  name?: string;
+  keyPrefix?: string;
+  keyHash?: string;
+  status: 'ACTIVE' | 'REVOKED' | string;
+  key?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  revokedAt?: string;
+}
+
+export interface IssueConsumerKeyInput {
+  name?: string;
+}
+
+export interface RouteItem {
+  id: string;
+  tenantId?: string;
+  serviceId?: string;
+  name?: string;
+  paths: string;
+  path?: string;
+  methods?: string | null;
+  protocols?: string | null;
+  stripPath?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ServiceItem {
+  id: string;
+  tenantId?: string;
+  name: string;
+  url?: string;
+  upstreamUrl?: string;
+  protocol?: string;
+  host?: string;
+  port?: number;
+  path?: string;
+  connectTimeout?: number;
+  readTimeout?: number;
+  retries?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export async function issueConsumerKey(
+  consumerId: string,
+  input?: IssueConsumerKeyInput,
+  options?: AdminApiClientOptions
+): Promise<ConsumerKey> {
+  const baseUrl = resolveBaseUrl(options);
+  const url = `${baseUrl}/api/admin/consumers/${encodeURIComponent(consumerId)}/keys`;
+  const fetcher = options?.fetchFn || fetch;
+
+  const tenantId = resolveTenantId(options);
+  const apiKey = resolveApiKey(options);
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  };
+
+  if (tenantId) {
+    headers['X-Tenant-Id'] = tenantId;
+  }
+  if (apiKey) {
+    headers['X-Api-Key'] = apiKey;
+  }
+
+  const payload: Record<string, any> = {};
+  if (input?.name) {
+    payload.name = input.name;
+  }
+
+  const response = await fetcher(url, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    let errorMessage = `Failed to issue API key: HTTP ${response.status}`;
+    let errorData: any = null;
+    try {
+      errorData = await response.json();
+      if (errorData && typeof errorData.message === 'string') {
+        errorMessage = errorData.message;
+      }
+    } catch {
+      // Non-JSON response
+    }
+    throw new AdminApiError(errorMessage, response.status, errorData);
+  }
+
+  return response.json();
+}
+
+export async function listConsumerKeys(
+  consumerId: string,
+  options?: AdminApiClientOptions
+): Promise<ConsumerKey[]> {
+  const baseUrl = resolveBaseUrl(options);
+  const url = `${baseUrl}/api/admin/consumers/${encodeURIComponent(consumerId)}/keys`;
+  const fetcher = options?.fetchFn || fetch;
+
+  const tenantId = resolveTenantId(options);
+  const apiKey = resolveApiKey(options);
+
+  const headers: Record<string, string> = {
+    'Accept': 'application/json',
+  };
+
+  if (tenantId) {
+    headers['X-Tenant-Id'] = tenantId;
+  }
+  if (apiKey) {
+    headers['X-Api-Key'] = apiKey;
+  }
+
+  const response = await fetcher(url, {
+    method: 'GET',
+    headers,
+  });
+
+  if (!response.ok) {
+    let errorMessage = `Failed to list API keys: HTTP ${response.status}`;
+    let errorData: any = null;
+    try {
+      errorData = await response.json();
+      if (errorData && typeof errorData.message === 'string') {
+        errorMessage = errorData.message;
+      }
+    } catch {
+      // Non-JSON response
+    }
+    throw new AdminApiError(errorMessage, response.status, errorData);
+  }
+
+  return response.json();
+}
+
+export async function revokeConsumerKey(
+  consumerId: string,
+  keyId: string,
+  options?: AdminApiClientOptions
+): Promise<void> {
+  const baseUrl = resolveBaseUrl(options);
+  const url = `${baseUrl}/api/admin/consumers/${encodeURIComponent(consumerId)}/keys/${encodeURIComponent(keyId)}`;
+  const fetcher = options?.fetchFn || fetch;
+
+  const tenantId = resolveTenantId(options);
+  const apiKey = resolveApiKey(options);
+
+  const headers: Record<string, string> = {};
+
+  if (tenantId) {
+    headers['X-Tenant-Id'] = tenantId;
+  }
+  if (apiKey) {
+    headers['X-Api-Key'] = apiKey;
+  }
+
+  const response = await fetcher(url, {
+    method: 'DELETE',
+    headers,
+  });
+
+  if (!response.ok) {
+    let errorMessage = `Failed to revoke API key: HTTP ${response.status}`;
+    let errorData: any = null;
+    try {
+      errorData = await response.json();
+      if (errorData && typeof errorData.message === 'string') {
+        errorMessage = errorData.message;
+      }
+    } catch {
+      // Non-JSON response
+    }
+    throw new AdminApiError(errorMessage, response.status, errorData);
+  }
+}
+
+export async function listRoutes(options?: AdminApiClientOptions): Promise<RouteItem[]> {
+  const baseUrl = resolveBaseUrl(options);
+  const url = `${baseUrl}/api/admin/routes`;
+  const fetcher = options?.fetchFn || fetch;
+
+  const tenantId = resolveTenantId(options);
+  const apiKey = resolveApiKey(options);
+
+  const headers: Record<string, string> = {
+    'Accept': 'application/json',
+  };
+
+  if (tenantId) {
+    headers['X-Tenant-Id'] = tenantId;
+  }
+  if (apiKey) {
+    headers['X-Api-Key'] = apiKey;
+  }
+
+  const response = await fetcher(url, {
+    method: 'GET',
+    headers,
+  });
+
+  if (!response.ok) {
+    let errorMessage = `Failed to list routes: HTTP ${response.status}`;
+    let errorData: any = null;
+    try {
+      errorData = await response.json();
+      if (errorData && typeof errorData.message === 'string') {
+        errorMessage = errorData.message;
+      }
+    } catch {
+      // Non-JSON response
+    }
+    throw new AdminApiError(errorMessage, response.status, errorData);
+  }
+
+  return response.json();
+}
+
+export async function listServices(options?: AdminApiClientOptions): Promise<ServiceItem[]> {
+  const baseUrl = resolveBaseUrl(options);
+  const url = `${baseUrl}/api/admin/services`;
+  const fetcher = options?.fetchFn || fetch;
+
+  const tenantId = resolveTenantId(options);
+  const apiKey = resolveApiKey(options);
+
+  const headers: Record<string, string> = {
+    'Accept': 'application/json',
+  };
+
+  if (tenantId) {
+    headers['X-Tenant-Id'] = tenantId;
+  }
+  if (apiKey) {
+    headers['X-Api-Key'] = apiKey;
+  }
+
+  const response = await fetcher(url, {
+    method: 'GET',
+    headers,
+  });
+
+  if (!response.ok) {
+    let errorMessage = `Failed to list services: HTTP ${response.status}`;
+    let errorData: any = null;
+    try {
+      errorData = await response.json();
+      if (errorData && typeof errorData.message === 'string') {
+        errorMessage = errorData.message;
+      }
+    } catch {
+      // Non-JSON response
+    }
+    throw new AdminApiError(errorMessage, response.status, errorData);
+  }
+
+  return response.json();
+}
+
 export const adminApiClient = {
   createConsumer,
   listConsumers,
   getConsumer,
+  issueConsumerKey,
+  issueKey: issueConsumerKey,
+  listConsumerKeys,
+  listKeys: listConsumerKeys,
+  revokeConsumerKey,
+  revokeKey: revokeConsumerKey,
+  listRoutes,
+  listServices,
 };
 
 export default adminApiClient;
