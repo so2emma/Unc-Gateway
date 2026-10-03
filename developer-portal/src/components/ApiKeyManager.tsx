@@ -82,10 +82,13 @@ export function ApiKeyManager({
       setKeys(updatedKeys);
       if (onKeysChange) onKeysChange(updatedKeys);
 
-      // Keep raw key for one-time display banner
+      // Keep raw key for one-time display banner and browser cache for live testing
       if (createdKey.key) {
         setNewlyIssuedRawKey(createdKey.key);
         if (typeof window !== 'undefined') {
+          window.localStorage.setItem('unc_raw_key_' + createdKey.id, createdKey.key);
+          window.localStorage.setItem('unc_active_raw_key', createdKey.key);
+          window.localStorage.setItem('unc_active_key_id', createdKey.id);
           window.sessionStorage.setItem('unc_active_api_key', createdKey.key);
           window.sessionStorage.setItem('unc_last_issued_key', createdKey.key);
         }

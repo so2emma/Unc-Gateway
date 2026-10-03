@@ -43,12 +43,14 @@ function EndpointsPageContent() {
     if (typeof window !== 'undefined') {
       const storedKey =
         window.sessionStorage.getItem('unc_active_api_key') ||
-        window.sessionStorage.getItem('unc_last_issued_key');
+        window.sessionStorage.getItem('unc_last_issued_key') ||
+        (selectedKeyId ? window.localStorage.getItem('unc_raw_key_' + selectedKeyId) : null) ||
+        window.localStorage.getItem('unc_active_raw_key');
       if (storedKey) {
         setCustomApiKey(storedKey);
       }
     }
-  }, []);
+  }, [selectedKeyId]);
 
   useEffect(() => {
     if (queryConsumerId) {
@@ -113,13 +115,30 @@ function EndpointsPageContent() {
     return keys.find((k) => k.id === selectedKeyId);
   };
 
+  const getSelectedKeyMaterial = (): string => {
+    const selectedKey = getSelectedKey();
+    if (!selectedKey) return '';
+    if (selectedKey.key) return selectedKey.key;
+    if (typeof window !== 'undefined') {
+      const cached = window.localStorage.getItem('unc_raw_key_' + selectedKey.id);
+      if (cached) return cached;
+      const activeRaw = window.localStorage.getItem('unc_active_raw_key');
+      const activeKeyId = window.localStorage.getItem('unc_active_key_id');
+      if (activeRaw && (!activeKeyId || activeKeyId === selectedKey.id)) return activeRaw;
+      const sessionRaw = window.sessionStorage.getItem('unc_active_api_key');
+      if (sessionRaw) return sessionRaw;
+    }
+    return '';
+  };
+
   const handleTestRoute = async (route: RouteItem, service?: ServiceItem) => {
     const routeKey = route.id;
     setLoadingRoutes((prev) => ({ ...prev, [routeKey]: true }));
 
     const selectedKey = getSelectedKey();
-    // Prioritize user-entered raw key, then raw key on newly issued object, then fallback to keyPrefix
-    const apiKeyToSend = customApiKey.trim() || selectedKey?.key || selectedKey?.keyPrefix || '';
+    const resolvedRawKey = getSelectedKeyMaterial();
+    // Prioritize user-entered raw key, then resolved raw key material from cache, then fallback to keyPrefix
+    const apiKeyToSend = customApiKey.trim() || resolvedRawKey || selectedKey?.key || selectedKey?.keyPrefix || '';
 
     try {
       const routePath = route.paths || route.path || '/';
@@ -313,23 +332,54 @@ function EndpointsPageContent() {
                   </Link>
                 </span>
               ) : (
-                <select
-                  value={selectedKeyId}
-                  onChange={(e) => setSelectedKeyId(e.target.value)}
-                  style={{
-                    fontSize: '13px',
-                    padding: '6px 12px',
-                    borderRadius: theme.radiusControl,
-                    border: `1px solid ${theme.border}`,
-                    width: 'auto',
-                  }}
-                >
-                  {keys.map((k) => (
-                    <option key={k.id} value={k.id}>
-                      {k.name || 'key'} ({k.keyPrefix || k.id.slice(0, 8)}...) — {k.status}
-                    </option>
-                  ))}
-                </select>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <select
+                    value={selectedKeyId}
+                    onChange={(e) => setSelectedKeyId(e.target.value)}
+                    style={{
+                      fontSize: '13px',
+                      padding: '6px 12px',
+                      borderRadius: theme.radiusControl,
+                      border: `1px solid ${theme.border}`,
+                      width: 'auto',
+                    }}
+                  >
+                    {keys.map((k) => (
+                      <option key={k.id} value={k.id}>
+                        {k.name || 'key'} ({k.keyPrefix || k.id.slice(0, 8)}...) — {k.status}
+                      </option>
+                    ))}
+                  </select>
+                  {getSelectedKeyMaterial() ? (
+                    <span
+                      style={{
+                        fontSize: '11px',
+                        color: theme.success,
+                        background: 'var(--success-tint, #E7F8EF)',
+                        padding: '3px 8px',
+                        borderRadius: '4px',
+                        fontWeight: 600,
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      ✓ Key Ready (200 OK)
+                    </span>
+                  ) : (
+                    <span
+                      style={{
+                        fontSize: '11px',
+                        color: theme.danger,
+                        background: 'var(--danger-tint, #FDECEC)',
+                        padding: '3px 8px',
+                        borderRadius: '4px',
+                        fontWeight: 600,
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      ⚠ Secret Key Missing
+                    </span>
+                  )}
+                </div>
               )}
             </div>
           </div>
@@ -469,7 +519,7 @@ function EndpointsPageContent() {
               };
 
               const selectedKey = getSelectedKey();
-              const effectiveKey = customApiKey.trim() || selectedKey?.keyPrefix || selectedKey?.id;
+              const effectiveKey = customApiKey.trim() || getSelectedKeyMaterial() || selectedKey?.keyPrefix || selectedKey?.id;
 
               return (
                 <EndpointSchematicCard
