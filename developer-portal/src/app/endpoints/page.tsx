@@ -1,0 +1,389 @@
+'use client';
+
+import React, { Suspense, useEffect, useState, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+import {
+  adminApiClient,
+  Consumer,
+  ConsumerKey,
+  RouteItem,
+  ServiceItem,
+} from '@/lib/adminApiClient';
+import {
+  gatewayClient,
+  GatewayResponseResult,
+} from '@/lib/gatewayClient';
+import {
+  EndpointSchematicCard,
+  SchematicRouteData,
+  SchematicResponseData,
+} from '@/components/EndpointSchematicCard';
+import { theme } from '@/styles/theme';
+
+function EndpointsPageContent() {
+  const searchParams = useSearchParams();
+  const queryConsumerId = searchParams.get('consumerId');
+
+  const [consumerId, setConsumerId] = useState<string>(queryConsumerId || '');
+  const [consumer, setConsumer] = useState<Consumer | null>(null);
+  const [keys, setKeys] = useState<ConsumerKey[]>([]);
+  const [selectedKeyId, setSelectedKeyId] = useState<string>('');
+  const [routes, setRoutes] = useState<RouteItem[]>([]);
+  const [services, setServices] = useState<ServiceItem[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Map of routeId -> GatewayResponseResult
+  const [responses, setResponses] = useState<Record<string, SchematicResponseData>>({});
+  const [loadingRoutes, setLoadingRoutes] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    if (queryConsumerId) {
+      setConsumerId(queryConsumerId);
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem('unc_consumer_id', queryConsumerId);
+      }
+    } else if (typeof window !== 'undefined') {
+      const stored = window.localStorage.getItem('unc_consumer_id');
+      if (stored) {
+        setConsumerId(stored);
+      }
+    }
+  }, [queryConsumerId]);
+
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    setErrorMessage(null);
+    try {
+      // 1. Load routes and services
+      const [fetchedRoutes, fetchedServices] = await Promise.all([
+        adminApiClient.listRoutes().catch(() => [] as RouteItem[]),
+        adminApiClient.listServices().catch(() => [] as ServiceItem[]),
+      ]);
+      setRoutes(fetchedRoutes);
+      setServices(fetchedServices);
+
+      // 2. Load consumer details and keys if consumerId is known
+      let activeConsumerId = consumerId;
+      if (!activeConsumerId) {
+        const consumers = await adminApiClient.listConsumers().catch(() => [] as Consumer[]);
+        if (consumers.length > 0) {
+          activeConsumerId = consumers[0].id;
+          setConsumerId(activeConsumerId);
+          setConsumer(consumers[0]);
+        }
+      } else {
+        const c = await adminApiClient.getConsumer(activeConsumerId).catch(() => null);
+        if (c) setConsumer(c);
+      }
+
+      if (activeConsumerId) {
+        const consumerKeys = await adminApiClient.listConsumerKeys(activeConsumerId).catch(() => [] as ConsumerKey[]);
+        setKeys(consumerKeys);
+        const activeKey = consumerKeys.find((k) => k.status === 'ACTIVE') || consumerKeys[0];
+        if (activeKey) {
+          setSelectedKeyId(activeKey.id);
+        }
+      }
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Failed to load gateway topology');
+    } finally {
+      setLoading(false);
+    }
+  }, [consumerId]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const getSelectedKey = (): ConsumerKey | undefined => {
+    return keys.find((k) => k.id === selectedKeyId);
+  };
+
+  const handleTestRoute = async (route: RouteItem, service?: ServiceItem) => {
+    const routeKey = route.id;
+    setLoadingRoutes((prev) => ({ ...prev, [routeKey]: true }));
+
+    const selectedKey = getSelectedKey();
+    // Use raw key if available (on initial issue) or key prefix / hash
+    const apiKeyToSend = selectedKey?.key || selectedKey?.keyPrefix || '';
+
+    try {
+      const routePath = route.paths || route.path || '/';
+      const result: GatewayResponseResult = await gatewayClient.sendGatewayRequest({
+        path: routePath,
+        method: route.methods ? route.methods.split(',')[0].trim() : 'GET',
+        apiKey: apiKeyToSend,
+        tenantId: route.tenantId || consumer?.tenantId,
+      });
+
+      setResponses((prev) => ({
+        ...prev,
+        [routeKey]: {
+          status: result.status,
+          statusText: result.statusText,
+          headers: result.headers,
+          body: result.data,
+          rawBody: result.rawBody,
+          durationMs: result.durationMs,
+          error: result.error,
+        },
+      }));
+    } catch (err: any) {
+      setResponses((prev) => ({
+        ...prev,
+        [routeKey]: {
+          status: 500,
+          statusText: 'Internal Error',
+          error: err?.message || 'Request failed',
+          durationMs: 0,
+        },
+      }));
+    } finally {
+      setLoadingRoutes((prev) => ({ ...prev, [routeKey]: false }));
+    }
+  };
+
+  const handleTestAll = async () => {
+    for (const r of routes) {
+      const s = services.find((svc) => svc.id === r.serviceId);
+      await handleTestRoute(r, s);
+    }
+  };
+
+  return (
+    <div style={{ flex: 1, padding: '40px 0 60px' }}>
+      <div className="container" style={{ maxWidth: '1040px' }}>
+        {/* Top Header */}
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '16px',
+            marginBottom: '28px',
+          }}
+        >
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+              <span
+                style={{
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                  color: theme.accent,
+                }}
+              >
+                Live Topology
+              </span>
+              <span style={{ color: theme.border }}>/</span>
+              <span style={{ fontSize: '12px', color: theme.muted }}>Dynamic Routing Schematics</span>
+            </div>
+            <h1
+              style={{
+                fontSize: '28px',
+                fontWeight: 800,
+                color: theme.ink,
+                letterSpacing: '-0.5px',
+              }}
+            >
+              Schematic Endpoint Cards
+            </h1>
+            <p style={{ color: theme.muted, fontSize: '15px', marginTop: '4px' }}>
+              Inspect the end-to-end Request → Route → Response topology executed dynamically by Gateway Core.
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            {consumerId && (
+              <Link
+                href={`/keys?consumerId=${encodeURIComponent(consumerId)}`}
+                className="btn btn-outline"
+                style={{ fontSize: '13.5px' }}
+              >
+                Manage API Keys
+              </Link>
+            )}
+            {routes.length > 0 && (
+              <button
+                onClick={handleTestAll}
+                className="btn btn-primary"
+                style={{ backgroundColor: theme.accent, fontSize: '13.5px' }}
+              >
+                ⚡ Probe All Routes
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Error Alert */}
+        {errorMessage && (
+          <div
+            role="alert"
+            style={{
+              background: 'var(--danger-tint, #FDECEC)',
+              color: 'var(--danger, #E5484D)',
+              borderRadius: theme.radiusControl,
+              padding: '12px 16px',
+              marginBottom: '24px',
+              fontSize: '14px',
+            }}
+          >
+            {errorMessage}
+          </div>
+        )}
+
+        {/* Control Bar: Active Consumer & Key Selector */}
+        <div
+          className="card"
+          style={{
+            padding: '16px 20px',
+            marginBottom: '28px',
+            borderRadius: theme.radiusCard,
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '16px',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span
+              style={{
+                fontWeight: 700,
+                fontSize: '13px',
+                color: theme.ink,
+              }}
+            >
+              Active Consumer:
+            </span>
+            <span
+              style={{
+                fontSize: '13.5px',
+                color: theme.ink,
+                background: theme.background,
+                padding: '4px 10px',
+                borderRadius: '6px',
+                border: `1px solid ${theme.border}`,
+              }}
+            >
+              <strong>{consumer?.name || consumer?.username || 'Consumer'}</strong>{' '}
+              <span className="mono" style={{ fontSize: '11.5px', color: theme.muted }}>
+                ({consumerId ? consumerId.slice(0, 8) + '...' : 'none'})
+              </span>
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <label style={{ fontSize: '13px', fontWeight: 600, color: theme.muted }}>
+              Active Demo Key:
+            </label>
+            {keys.length === 0 ? (
+              <span style={{ fontSize: '13px', color: theme.danger }}>
+                No keys found.{' '}
+                <Link
+                  href={`/keys?consumerId=${encodeURIComponent(consumerId)}`}
+                  style={{ color: theme.accent, textDecoration: 'underline' }}
+                >
+                  Issue a key
+                </Link>
+              </span>
+            ) : (
+              <select
+                value={selectedKeyId}
+                onChange={(e) => setSelectedKeyId(e.target.value)}
+                style={{
+                  fontSize: '13px',
+                  padding: '6px 12px',
+                  borderRadius: theme.radiusControl,
+                  border: `1px solid ${theme.border}`,
+                  width: 'auto',
+                }}
+              >
+                {keys.map((k) => (
+                  <option key={k.id} value={k.id}>
+                    {k.name || 'key'} ({k.keyPrefix || k.id.slice(0, 8)}...) — {k.status}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+        </div>
+
+        {/* List of Endpoint Schematic Cards */}
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '60px 0', color: theme.muted }}>
+            Loading gateway routes and services...
+          </div>
+        ) : routes.length === 0 ? (
+          <div
+            className="card"
+            style={{
+              padding: '48px 24px',
+              textAlign: 'center',
+              borderRadius: theme.radiusCard,
+            }}
+          >
+            <h3 style={{ fontSize: '16px', fontWeight: 700, color: theme.ink, marginBottom: '8px' }}>
+              No Resolvable Routes Found
+            </h3>
+            <p style={{ color: theme.muted, fontSize: '14px', maxWidth: '440px', margin: '0 auto 20px' }}>
+              No routes are registered for this tenant yet. Once routes are registered in the Admin API, dynamic routing schematics will appear here.
+            </p>
+          </div>
+        ) : (
+          <div>
+            {routes.map((route) => {
+              const matchedService = services.find((s) => s.id === route.serviceId);
+              const routeData: SchematicRouteData = {
+                routeId: route.id,
+                routeName: route.name,
+                routePath: route.paths || route.path || '/',
+                serviceName: matchedService?.name || 'mock-upstream',
+                serviceUrl: matchedService?.url || matchedService?.upstreamUrl || 'http://mock-upstream:9090',
+                stripPath: route.stripPath !== false,
+              };
+
+              const selectedKey = getSelectedKey();
+
+              return (
+                <EndpointSchematicCard
+                  key={route.id}
+                  route={routeData}
+                  request={{
+                    method: route.methods ? route.methods.split(',')[0].trim() : 'GET',
+                    path: route.paths || route.path || '/',
+                    headers: {
+                      'X-Api-Key': selectedKey?.keyPrefix || selectedKey?.id || '••••••••',
+                    },
+                  }}
+                  response={responses[route.id]}
+                  isLoading={!!loadingRoutes[route.id]}
+                  onSendRequest={() => handleTestRoute(route, matchedService)}
+                  selectedApiKey={selectedKey?.keyPrefix || selectedKey?.id}
+                />
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default function EndpointsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div style={{ padding: '60px', textAlign: 'center', color: theme.muted }}>
+          Loading Endpoint Schematics...
+        </div>
+      }
+    >
+      <EndpointsPageContent />
+    </Suspense>
+  );
+}
