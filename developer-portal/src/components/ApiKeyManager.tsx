@@ -85,6 +85,10 @@ export function ApiKeyManager({
       // Keep raw key for one-time display banner
       if (createdKey.key) {
         setNewlyIssuedRawKey(createdKey.key);
+        if (typeof window !== 'undefined') {
+          window.sessionStorage.setItem('unc_active_api_key', createdKey.key);
+          window.sessionStorage.setItem('unc_last_issued_key', createdKey.key);
+        }
       }
       setNewKeyName('');
       setToastMessage('API key issued successfully');

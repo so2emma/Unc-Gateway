@@ -29,6 +29,7 @@ function EndpointsPageContent() {
   const [consumer, setConsumer] = useState<Consumer | null>(null);
   const [keys, setKeys] = useState<ConsumerKey[]>([]);
   const [selectedKeyId, setSelectedKeyId] = useState<string>('');
+  const [customApiKey, setCustomApiKey] = useState<string>('');
   const [routes, setRoutes] = useState<RouteItem[]>([]);
   const [services, setServices] = useState<ServiceItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -37,6 +38,17 @@ function EndpointsPageContent() {
   // Map of routeId -> GatewayResponseResult
   const [responses, setResponses] = useState<Record<string, SchematicResponseData>>({});
   const [loadingRoutes, setLoadingRoutes] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedKey =
+        window.sessionStorage.getItem('unc_active_api_key') ||
+        window.sessionStorage.getItem('unc_last_issued_key');
+      if (storedKey) {
+        setCustomApiKey(storedKey);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (queryConsumerId) {
@@ -106,8 +118,8 @@ function EndpointsPageContent() {
     setLoadingRoutes((prev) => ({ ...prev, [routeKey]: true }));
 
     const selectedKey = getSelectedKey();
-    // Use raw key if available (on initial issue) or key prefix / hash
-    const apiKeyToSend = selectedKey?.key || selectedKey?.keyPrefix || '';
+    // Prioritize user-entered raw key, then raw key on newly issued object, then fallback to keyPrefix
+    const apiKeyToSend = customApiKey.trim() || selectedKey?.key || selectedKey?.keyPrefix || '';
 
     try {
       const routePath = route.paths || route.path || '/';
@@ -240,76 +252,185 @@ function EndpointsPageContent() {
         <div
           className="card"
           style={{
-            padding: '16px 20px',
+            padding: '20px 24px',
             marginBottom: '28px',
             borderRadius: theme.radiusCard,
             display: 'flex',
-            flexWrap: 'wrap',
-            alignItems: 'center',
-            justifyContent: 'space-between',
+            flexDirection: 'column',
             gap: '16px',
+            background: theme.surface,
+            border: `1px solid ${theme.border}`,
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <span
-              style={{
-                fontWeight: 700,
-                fontSize: '13px',
-                color: theme.ink,
-              }}
-            >
-              Active Consumer:
-            </span>
-            <span
-              style={{
-                fontSize: '13.5px',
-                color: theme.ink,
-                background: theme.background,
-                padding: '4px 10px',
-                borderRadius: '6px',
-                border: `1px solid ${theme.border}`,
-              }}
-            >
-              <strong>{consumer?.name || consumer?.username || 'Consumer'}</strong>{' '}
-              <span className="mono" style={{ fontSize: '11.5px', color: theme.muted }}>
-                ({consumerId ? consumerId.slice(0, 8) + '...' : 'none'})
-              </span>
-            </span>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <label style={{ fontSize: '13px', fontWeight: 600, color: theme.muted }}>
-              Active Demo Key:
-            </label>
-            {keys.length === 0 ? (
-              <span style={{ fontSize: '13px', color: theme.danger }}>
-                No keys found.{' '}
-                <Link
-                  href={`/keys?consumerId=${encodeURIComponent(consumerId)}`}
-                  style={{ color: theme.accent, textDecoration: 'underline' }}
-                >
-                  Issue a key
-                </Link>
-              </span>
-            ) : (
-              <select
-                value={selectedKeyId}
-                onChange={(e) => setSelectedKeyId(e.target.value)}
+          <div
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '16px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span
                 style={{
+                  fontWeight: 700,
                   fontSize: '13px',
-                  padding: '6px 12px',
-                  borderRadius: theme.radiusControl,
-                  border: `1px solid ${theme.border}`,
-                  width: 'auto',
+                  color: theme.ink,
                 }}
               >
-                {keys.map((k) => (
-                  <option key={k.id} value={k.id}>
-                    {k.name || 'key'} ({k.keyPrefix || k.id.slice(0, 8)}...) — {k.status}
-                  </option>
-                ))}
-              </select>
-            )}
+                Active Consumer:
+              </span>
+              <span
+                style={{
+                  fontSize: '13.5px',
+                  color: theme.ink,
+                  background: theme.background,
+                  padding: '4px 10px',
+                  borderRadius: '6px',
+                  border: `1px solid ${theme.border}`,
+                }}
+              >
+                <strong>{consumer?.name || consumer?.username || 'Consumer'}</strong>{' '}
+                <span className="mono" style={{ fontSize: '11.5px', color: theme.muted }}>
+                  ({consumerId ? consumerId.slice(0, 8) + '...' : 'none'})
+                </span>
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <label style={{ fontSize: '13px', fontWeight: 600, color: theme.muted }}>
+                Registered Key:
+              </label>
+              {keys.length === 0 ? (
+                <span style={{ fontSize: '13px', color: theme.danger }}>
+                  No keys found.{' '}
+                  <Link
+                    href={`/keys?consumerId=${encodeURIComponent(consumerId)}`}
+                    style={{ color: theme.accent, textDecoration: 'underline' }}
+                  >
+                    Issue a key
+                  </Link>
+                </span>
+              ) : (
+                <select
+                  value={selectedKeyId}
+                  onChange={(e) => setSelectedKeyId(e.target.value)}
+                  style={{
+                    fontSize: '13px',
+                    padding: '6px 12px',
+                    borderRadius: theme.radiusControl,
+                    border: `1px solid ${theme.border}`,
+                    width: 'auto',
+                  }}
+                >
+                  {keys.map((k) => (
+                    <option key={k.id} value={k.id}>
+                      {k.name || 'key'} ({k.keyPrefix || k.id.slice(0, 8)}...) — {k.status}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+          </div>
+
+          {/* Dedicated API Key Input Field */}
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '6px',
+              paddingTop: '14px',
+              borderTop: `1px solid ${theme.border}`,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+              <label htmlFor="custom-api-key-input" style={{ fontSize: '13px', fontWeight: 700, color: theme.ink }}>
+                API Key for Live Request:
+              </label>
+              {customApiKey && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCustomApiKey('');
+                    if (typeof window !== 'undefined') {
+                      window.sessionStorage.removeItem('unc_active_api_key');
+                    }
+                  }}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: theme.muted,
+                    fontSize: '12px',
+                    cursor: 'pointer',
+                    textDecoration: 'underline',
+                  }}
+                >
+                  Clear key (test 401 Unauthorized)
+                </button>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+              <input
+                id="custom-api-key-input"
+                data-testid="api-key-input"
+                type="text"
+                placeholder="Paste your raw key here (e.g. unc_key_...) to authenticate"
+                value={customApiKey}
+                onChange={(e) => {
+                  setCustomApiKey(e.target.value);
+                  if (typeof window !== 'undefined') {
+                    window.sessionStorage.setItem('unc_active_api_key', e.target.value);
+                  }
+                }}
+                className="mono"
+                style={{
+                  flex: 1,
+                  minWidth: '280px',
+                  padding: '9px 14px',
+                  fontSize: '13px',
+                  borderRadius: theme.radiusControl,
+                  border: `1px solid ${customApiKey ? theme.accent : theme.border}`,
+                  background: '#FFFFFF',
+                  fontFamily: theme.fontFamilyMono,
+                }}
+              />
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    const text = await navigator.clipboard.readText();
+                    if (text && text.trim()) {
+                      setCustomApiKey(text.trim());
+                      if (typeof window !== 'undefined') {
+                        window.sessionStorage.setItem('unc_active_api_key', text.trim());
+                      }
+                    }
+                  } catch {}
+                }}
+                className="btn btn-outline btn-sm"
+                style={{ fontSize: '12px', padding: '8px 12px', whiteSpace: 'nowrap' }}
+              >
+                📋 Paste from Clipboard
+              </button>
+            </div>
+
+            <div style={{ fontSize: '12px', color: theme.muted, marginTop: '2px' }}>
+              {customApiKey ? (
+                <span style={{ color: theme.success, fontWeight: 500 }}>
+                  ✓ Using key: <code className="mono">{customApiKey.slice(0, 16)}••••••••</code> (will send via <code className="mono">X-Api-Key</code> header)
+                </span>
+              ) : (
+                <span>
+                  💡 <strong>Where to get the key:</strong> Copy the raw key when issuing it on the{' '}
+                  <Link href={`/keys?consumerId=${encodeURIComponent(consumerId)}`} style={{ color: theme.accent, textDecoration: 'underline' }}>
+                    API Keys page
+                  </Link>
+                  . Without pasting the raw key, Gateway Core will reject requests with <strong>401 Unauthorized</strong>.
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
@@ -348,6 +469,7 @@ function EndpointsPageContent() {
               };
 
               const selectedKey = getSelectedKey();
+              const effectiveKey = customApiKey.trim() || selectedKey?.keyPrefix || selectedKey?.id;
 
               return (
                 <EndpointSchematicCard
@@ -357,13 +479,13 @@ function EndpointsPageContent() {
                     method: route.methods ? route.methods.split(',')[0].trim() : 'GET',
                     path: route.paths || route.path || '/',
                     headers: {
-                      'X-Api-Key': selectedKey?.keyPrefix || selectedKey?.id || '••••••••',
+                      'X-Api-Key': effectiveKey || '••••••••',
                     },
                   }}
                   response={responses[route.id]}
                   isLoading={!!loadingRoutes[route.id]}
                   onSendRequest={() => handleTestRoute(route, matchedService)}
-                  selectedApiKey={selectedKey?.keyPrefix || selectedKey?.id}
+                  selectedApiKey={effectiveKey}
                 />
               );
             })}
