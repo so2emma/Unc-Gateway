@@ -40,17 +40,22 @@ function EndpointsPageContent() {
   const [loadingRoutes, setLoadingRoutes] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
+    // Purge any lingering keys from web storage to ensure zero persistent secrets
     if (typeof window !== 'undefined') {
-      const storedKey =
-        window.sessionStorage.getItem('unc_active_api_key') ||
-        window.sessionStorage.getItem('unc_last_issued_key') ||
-        (selectedKeyId ? window.localStorage.getItem('unc_raw_key_' + selectedKeyId) : null) ||
-        window.localStorage.getItem('unc_active_raw_key');
-      if (storedKey) {
-        setCustomApiKey(storedKey);
-      }
+      try {
+        const keysToPurge: string[] = [];
+        for (let i = 0; i < window.localStorage.length; i++) {
+          const k = window.localStorage.key(i);
+          if (k && (k.startsWith('unc_raw_key_') || k.startsWith('unc_active_'))) {
+            keysToPurge.push(k);
+          }
+        }
+        keysToPurge.forEach((k) => window.localStorage.removeItem(k));
+        window.sessionStorage.removeItem('unc_active_api_key');
+        window.sessionStorage.removeItem('unc_last_issued_key');
+      } catch {}
     }
-  }, [selectedKeyId]);
+  }, []);
 
   useEffect(() => {
     if (queryConsumerId) {
@@ -115,30 +120,12 @@ function EndpointsPageContent() {
     return keys.find((k) => k.id === selectedKeyId);
   };
 
-  const getSelectedKeyMaterial = (): string => {
-    const selectedKey = getSelectedKey();
-    if (!selectedKey) return '';
-    if (selectedKey.key) return selectedKey.key;
-    if (typeof window !== 'undefined') {
-      const cached = window.localStorage.getItem('unc_raw_key_' + selectedKey.id);
-      if (cached) return cached;
-      const activeRaw = window.localStorage.getItem('unc_active_raw_key');
-      const activeKeyId = window.localStorage.getItem('unc_active_key_id');
-      if (activeRaw && (!activeKeyId || activeKeyId === selectedKey.id)) return activeRaw;
-      const sessionRaw = window.sessionStorage.getItem('unc_active_api_key');
-      if (sessionRaw) return sessionRaw;
-    }
-    return '';
-  };
-
   const handleTestRoute = async (route: RouteItem, service?: ServiceItem) => {
     const routeKey = route.id;
     setLoadingRoutes((prev) => ({ ...prev, [routeKey]: true }));
 
-    const selectedKey = getSelectedKey();
-    const resolvedRawKey = getSelectedKeyMaterial();
-    // Prioritize user-entered raw key, then resolved raw key material from cache, then fallback to keyPrefix
-    const apiKeyToSend = customApiKey.trim() || resolvedRawKey || selectedKey?.key || selectedKey?.keyPrefix || '';
+    // Use in-memory key entered by user; if empty, request is sent unauthenticated (tests 401)
+    const apiKeyToSend = customApiKey.trim();
 
     try {
       const routePath = route.paths || route.path || '/';
@@ -332,59 +319,28 @@ function EndpointsPageContent() {
                   </Link>
                 </span>
               ) : (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <select
-                    value={selectedKeyId}
-                    onChange={(e) => setSelectedKeyId(e.target.value)}
-                    style={{
-                      fontSize: '13px',
-                      padding: '6px 12px',
-                      borderRadius: theme.radiusControl,
-                      border: `1px solid ${theme.border}`,
-                      width: 'auto',
-                    }}
-                  >
-                    {keys.map((k) => (
-                      <option key={k.id} value={k.id}>
-                        {k.name || 'key'} ({k.keyPrefix || k.id.slice(0, 8)}...) — {k.status}
-                      </option>
-                    ))}
-                  </select>
-                  {getSelectedKeyMaterial() ? (
-                    <span
-                      style={{
-                        fontSize: '11px',
-                        color: theme.success,
-                        background: 'var(--success-tint, #E7F8EF)',
-                        padding: '3px 8px',
-                        borderRadius: '4px',
-                        fontWeight: 600,
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      ✓ Key Ready (200 OK)
-                    </span>
-                  ) : (
-                    <span
-                      style={{
-                        fontSize: '11px',
-                        color: theme.danger,
-                        background: 'var(--danger-tint, #FDECEC)',
-                        padding: '3px 8px',
-                        borderRadius: '4px',
-                        fontWeight: 600,
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      ⚠ Secret Key Missing
-                    </span>
-                  )}
-                </div>
+                <select
+                  value={selectedKeyId}
+                  onChange={(e) => setSelectedKeyId(e.target.value)}
+                  style={{
+                    fontSize: '13px',
+                    padding: '6px 12px',
+                    borderRadius: theme.radiusControl,
+                    border: `1px solid ${theme.border}`,
+                    width: 'auto',
+                  }}
+                >
+                  {keys.map((k) => (
+                    <option key={k.id} value={k.id}>
+                      {k.name || 'key'} ({k.keyPrefix || k.id.slice(0, 8)}...) — {k.status}
+                    </option>
+                  ))}
+                </select>
               )}
             </div>
           </div>
 
-          {/* Dedicated API Key Input Field */}
+          {/* Dedicated API Key Input Field (In-Memory Only) */}
           <div
             style={{
               display: 'flex',
@@ -396,17 +352,12 @@ function EndpointsPageContent() {
           >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
               <label htmlFor="custom-api-key-input" style={{ fontSize: '13px', fontWeight: 700, color: theme.ink }}>
-                API Key for Live Request:
+                API Key for Live Request (In-Memory Only):
               </label>
               {customApiKey && (
                 <button
                   type="button"
-                  onClick={() => {
-                    setCustomApiKey('');
-                    if (typeof window !== 'undefined') {
-                      window.sessionStorage.removeItem('unc_active_api_key');
-                    }
-                  }}
+                  onClick={() => setCustomApiKey('')}
                   style={{
                     background: 'transparent',
                     border: 'none',
@@ -426,14 +377,9 @@ function EndpointsPageContent() {
                 id="custom-api-key-input"
                 data-testid="api-key-input"
                 type="text"
-                placeholder="Paste your raw key here (e.g. unc_key_...) to authenticate"
+                placeholder="Paste your raw secret key here (unc_key_...) to authenticate"
                 value={customApiKey}
-                onChange={(e) => {
-                  setCustomApiKey(e.target.value);
-                  if (typeof window !== 'undefined') {
-                    window.sessionStorage.setItem('unc_active_api_key', e.target.value);
-                  }
-                }}
+                onChange={(e) => setCustomApiKey(e.target.value)}
                 className="mono"
                 style={{
                   flex: 1,
@@ -453,9 +399,6 @@ function EndpointsPageContent() {
                     const text = await navigator.clipboard.readText();
                     if (text && text.trim()) {
                       setCustomApiKey(text.trim());
-                      if (typeof window !== 'undefined') {
-                        window.sessionStorage.setItem('unc_active_api_key', text.trim());
-                      }
                     }
                   } catch {}
                 }}
@@ -469,15 +412,16 @@ function EndpointsPageContent() {
             <div style={{ fontSize: '12px', color: theme.muted, marginTop: '2px' }}>
               {customApiKey ? (
                 <span style={{ color: theme.success, fontWeight: 500 }}>
-                  ✓ Using key: <code className="mono">{customApiKey.slice(0, 16)}••••••••</code> (will send via <code className="mono">X-Api-Key</code> header)
+                  ✓ In-memory key supplied: <code className="mono">{customApiKey.slice(0, 16)}••••••••</code> (will send via <code className="mono">X-Api-Key</code> header)
                 </span>
               ) : (
                 <span>
-                  💡 <strong>Where to get the key:</strong> Copy the raw key when issuing it on the{' '}
+                  🔒 <strong>Security Policy:</strong> Raw API keys are never cached in browser storage or saved in plaintext on the server.
+                  Copy your secret key when issuing it on the{' '}
                   <Link href={`/keys?consumerId=${encodeURIComponent(consumerId)}`} style={{ color: theme.accent, textDecoration: 'underline' }}>
                     API Keys page
                   </Link>
-                  . Without pasting the raw key, Gateway Core will reject requests with <strong>401 Unauthorized</strong>.
+                  , and paste it above to test authenticated 200 OK responses.
                 </span>
               )}
             </div>
@@ -519,7 +463,7 @@ function EndpointsPageContent() {
               };
 
               const selectedKey = getSelectedKey();
-              const effectiveKey = customApiKey.trim() || getSelectedKeyMaterial() || selectedKey?.keyPrefix || selectedKey?.id;
+              const effectiveKey = customApiKey.trim() || selectedKey?.keyPrefix || selectedKey?.id;
 
               return (
                 <EndpointSchematicCard
