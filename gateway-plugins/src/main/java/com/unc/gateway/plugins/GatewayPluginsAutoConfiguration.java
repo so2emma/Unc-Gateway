@@ -47,21 +47,52 @@ public class GatewayPluginsAutoConfiguration {
     }
 
     @Bean
+    @ConditionalOnMissingBean
+    public JwtVerifier jwtVerifier() {
+        return new JwtVerifier();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public JwtAuthFilter jwtAuthFilter(JwtVerifier jwtVerifier) {
+        return new JwtAuthFilter(jwtVerifier);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public RequestTransformFilter requestTransformFilter() {
+        return new RequestTransformFilter();
+    }
+
+    @Bean
     public PluginRegistrationInitializer pluginRegistrationInitializer(
             @Autowired(required = false) PluginRegistry registry,
             @Autowired(required = false) KeyAuthFilter keyAuthFilter,
-            @Autowired(required = false) RateLimitFilter rateLimitFilter) {
-        return new PluginRegistrationInitializer(registry, keyAuthFilter, rateLimitFilter);
+            @Autowired(required = false) RateLimitFilter rateLimitFilter,
+            @Autowired(required = false) JwtAuthFilter jwtAuthFilter,
+            @Autowired(required = false) RequestTransformFilter requestTransformFilter) {
+        return new PluginRegistrationInitializer(registry, keyAuthFilter, rateLimitFilter, jwtAuthFilter, requestTransformFilter);
     }
 
     public static class PluginRegistrationInitializer {
-        public PluginRegistrationInitializer(PluginRegistry registry, KeyAuthFilter keyAuthFilter, RateLimitFilter rateLimitFilter) {
+        public PluginRegistrationInitializer(
+                PluginRegistry registry,
+                KeyAuthFilter keyAuthFilter,
+                RateLimitFilter rateLimitFilter,
+                JwtAuthFilter jwtAuthFilter,
+                RequestTransformFilter requestTransformFilter) {
             if (registry != null) {
                 if (keyAuthFilter != null && !registry.isRegistered("key-auth")) {
                     registry.register("key-auth", keyAuthFilter, new KeyAuthConfigSchema());
                 }
                 if (rateLimitFilter != null && !registry.isRegistered("rate-limit")) {
                     registry.register("rate-limit", rateLimitFilter, new RateLimitConfigSchema());
+                }
+                if (jwtAuthFilter != null && !registry.isRegistered("jwt-auth")) {
+                    registry.register("jwt-auth", jwtAuthFilter, new JwtAuthConfigSchema());
+                }
+                if (requestTransformFilter != null && !registry.isRegistered("request-transform")) {
+                    registry.register("request-transform", requestTransformFilter, new RequestTransformConfigSchema());
                 }
             }
         }
