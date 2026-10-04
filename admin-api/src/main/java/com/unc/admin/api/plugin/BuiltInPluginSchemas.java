@@ -102,15 +102,15 @@ public final class BuiltInPluginSchemas {
         }
     }
 
-    /** {@code jwt-auth}: requires {@code secret} or {@code public_key}; optional {@code algorithm}. */
+    /** {@code jwt-auth}: requires {@code secret} or {@code public_key}; optional {@code algorithm}, {@code header_name}, {@code claims}. */
     static void validateJwtAuth(Map<String, Object> config) {
         if (config == null || config.isEmpty()) {
             throw new IllegalArgumentException("jwt-auth: either 'secret' or 'public_key' is required");
         }
-        rejectUnknownKeys(JWT_AUTH, config, Set.of("secret", "public_key", "algorithm", "claims"));
+        rejectUnknownKeys(JWT_AUTH, config, Set.of("secret", "public_key", "publicKey", "algorithm", "header_name", "headerName", "claims"));
 
         boolean hasSecret = isNonBlankString(config.get("secret"));
-        boolean hasPublicKey = isNonBlankString(config.get("public_key"));
+        boolean hasPublicKey = isNonBlankString(config.get("public_key")) || isNonBlankString(config.get("publicKey"));
         if (!hasSecret && !hasPublicKey) {
             throw new IllegalArgumentException("jwt-auth: either 'secret' or 'public_key' is required");
         }
@@ -121,34 +121,55 @@ public final class BuiltInPluginSchemas {
                         + "', expected one of " + SUPPORTED_JWT_ALGORITHMS);
             }
         }
+        if (config.containsKey("header_name")) {
+            requireString(JWT_AUTH, config, "header_name");
+        }
+        if (config.containsKey("headerName")) {
+            requireString(JWT_AUTH, config, "headerName");
+        }
         if (config.containsKey("claims")) {
             requireStringList(JWT_AUTH, config, "claims");
         }
     }
 
-    /** {@code request-transform}: optional {@code add_headers} map and {@code remove_headers} list. */
+    /** {@code request-transform}: optional {@code add_headers}, {@code remove_headers}, and {@code rename_headers}. */
     static void validateRequestTransform(Map<String, Object> config) {
         if (config == null || config.isEmpty()) {
             return;
         }
-        rejectUnknownKeys(REQUEST_TRANSFORM, config, Set.of("add_headers", "remove_headers"));
+        rejectUnknownKeys(REQUEST_TRANSFORM, config, Set.of("add_headers", "addHeaders", "remove_headers", "removeHeaders", "rename_headers", "renameHeaders"));
         if (config.containsKey("add_headers")) {
-            Object raw = config.get("add_headers");
-            if (!(raw instanceof Map<?, ?> headers)) {
-                throw new IllegalArgumentException("request-transform: 'add_headers' must be an object of header name to value");
-            }
-            for (Map.Entry<?, ?> entry : headers.entrySet()) {
-                if (!(entry.getKey() instanceof String) || !isNonBlankString(entry.getKey())) {
-                    throw new IllegalArgumentException("request-transform: 'add_headers' keys must be non-empty strings");
-                }
-                if (!(entry.getValue() instanceof String)) {
-                    throw new IllegalArgumentException("request-transform: 'add_headers' value for '"
-                            + entry.getKey() + "' must be a string");
-                }
-            }
+            validateHeaderMap(REQUEST_TRANSFORM, config.get("add_headers"), "add_headers");
+        }
+        if (config.containsKey("addHeaders")) {
+            validateHeaderMap(REQUEST_TRANSFORM, config.get("addHeaders"), "addHeaders");
         }
         if (config.containsKey("remove_headers")) {
             requireStringList(REQUEST_TRANSFORM, config, "remove_headers");
+        }
+        if (config.containsKey("removeHeaders")) {
+            requireStringList(REQUEST_TRANSFORM, config, "removeHeaders");
+        }
+        if (config.containsKey("rename_headers")) {
+            validateHeaderMap(REQUEST_TRANSFORM, config.get("rename_headers"), "rename_headers");
+        }
+        if (config.containsKey("renameHeaders")) {
+            validateHeaderMap(REQUEST_TRANSFORM, config.get("renameHeaders"), "renameHeaders");
+        }
+    }
+
+    private static void validateHeaderMap(String plugin, Object raw, String field) {
+        if (!(raw instanceof Map<?, ?> headers)) {
+            throw new IllegalArgumentException(plugin + ": '" + field + "' must be an object of header name to value");
+        }
+        for (Map.Entry<?, ?> entry : headers.entrySet()) {
+            if (!(entry.getKey() instanceof String) || !isNonBlankString(entry.getKey())) {
+                throw new IllegalArgumentException(plugin + ": '" + field + "' keys must be non-empty strings");
+            }
+            if (!(entry.getValue() instanceof String)) {
+                throw new IllegalArgumentException(plugin + ": '" + field + "' value for '"
+                        + entry.getKey() + "' must be a string");
+            }
         }
     }
 

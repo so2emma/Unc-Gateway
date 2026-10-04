@@ -86,4 +86,97 @@ class PluginConfigSchemasTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("unknown config field 'unknown'");
     }
+
+    private final JwtAuthConfigSchema jwtAuthSchema = new JwtAuthConfigSchema();
+    private final RequestTransformConfigSchema requestTransformSchema = new RequestTransformConfigSchema();
+
+    @Test
+    @DisplayName("JwtAuthConfigSchema: accepts valid secret, algorithm, and headerName")
+    void testJwtAuthValid() {
+        Map<String, Object> config1 = Map.of(
+                "secret", "my-secret-key",
+                "algorithm", "HS256",
+                "headerName", "Authorization"
+        );
+        assertThatCode(() -> jwtAuthSchema.validate(config1)).doesNotThrowAnyException();
+        assertThat(JwtAuthConfigSchema.extractSecret(config1)).isEqualTo("my-secret-key");
+        assertThat(JwtAuthConfigSchema.extractAlgorithm(config1)).isEqualTo("HS256");
+        assertThat(JwtAuthConfigSchema.extractHeaderName(config1)).isEqualTo("Authorization");
+
+        Map<String, Object> config2 = Map.of(
+                "public_key", "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A...",
+                "algorithm", "RS256",
+                "header_name", "X-Custom-JWT"
+        );
+        assertThatCode(() -> jwtAuthSchema.validate(config2)).doesNotThrowAnyException();
+        assertThat(JwtAuthConfigSchema.extractPublicKey(config2)).isEqualTo("MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A...");
+        assertThat(JwtAuthConfigSchema.extractAlgorithm(config2)).isEqualTo("RS256");
+        assertThat(JwtAuthConfigSchema.extractHeaderName(config2)).isEqualTo("X-Custom-JWT");
+    }
+
+    @Test
+    @DisplayName("JwtAuthConfigSchema: rejects missing secret/public_key or invalid fields")
+    void testJwtAuthInvalid() {
+        assertThatThrownBy(() -> jwtAuthSchema.validate(Map.of()))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("either 'secret' or 'public_key' is required");
+
+        assertThatThrownBy(() -> jwtAuthSchema.validate(Map.of("secret", "   ")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("either 'secret' or 'public_key' is required");
+
+        assertThatThrownBy(() -> jwtAuthSchema.validate(Map.of("secret", "key", "algorithm", "MD5")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("unsupported 'algorithm' value 'MD5'");
+
+        assertThatThrownBy(() -> jwtAuthSchema.validate(Map.of("secret", "key", "invalidField", "val")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("unknown config field 'invalidField'");
+    }
+
+    @Test
+    @DisplayName("RequestTransformConfigSchema: accepts valid add, remove, and rename configurations")
+    void testRequestTransformValid() {
+        assertThatCode(() -> requestTransformSchema.validate(Map.of())).doesNotThrowAnyException();
+
+        Map<String, Object> config = Map.of(
+                "addHeaders", Map.of("X-Trace-Id", "12345"),
+                "removeHeaders", List.of("X-Internal"),
+                "renameHeaders", Map.of("X-Old", "X-New")
+        );
+        assertThatCode(() -> requestTransformSchema.validate(config)).doesNotThrowAnyException();
+        assertThat(RequestTransformConfigSchema.extractAddHeaders(config)).containsEntry("X-Trace-Id", "12345");
+        assertThat(RequestTransformConfigSchema.extractRemoveHeaders(config)).containsExactly("X-Internal");
+        assertThat(RequestTransformConfigSchema.extractRenameHeaders(config)).containsEntry("X-Old", "X-New");
+
+        Map<String, Object> snakeConfig = Map.of(
+                "add_headers", Map.of("X-Trace", "abc"),
+                "remove_headers", List.of("X-Old-Header"),
+                "rename_headers", Map.of("From", "To")
+        );
+        assertThatCode(() -> requestTransformSchema.validate(snakeConfig)).doesNotThrowAnyException();
+        assertThat(RequestTransformConfigSchema.extractAddHeaders(snakeConfig)).containsEntry("X-Trace", "abc");
+        assertThat(RequestTransformConfigSchema.extractRemoveHeaders(snakeConfig)).containsExactly("X-Old-Header");
+        assertThat(RequestTransformConfigSchema.extractRenameHeaders(snakeConfig)).containsEntry("From", "To");
+    }
+
+    @Test
+    @DisplayName("RequestTransformConfigSchema: rejects malformed structures or unknown keys")
+    void testRequestTransformInvalid() {
+        assertThatThrownBy(() -> requestTransformSchema.validate(Map.of("unknownKey", 123)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("unknown config field 'unknownKey'");
+
+        assertThatThrownBy(() -> requestTransformSchema.validate(Map.of("addHeaders", "not-a-map")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("'addHeaders' must be an object");
+
+        assertThatThrownBy(() -> requestTransformSchema.validate(Map.of("removeHeaders", "not-a-list")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("'removeHeaders' must be an array");
+
+        assertThatThrownBy(() -> requestTransformSchema.validate(Map.of("renameHeaders", List.of("bad"))))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("'renameHeaders' must be an object");
+    }
 }
