@@ -6,7 +6,6 @@ import Link from 'next/link';
 import {
   adminApiClient,
   Consumer,
-  ConsumerKey,
   RouteItem,
   ServiceItem,
 } from '@/lib/adminApiClient';
@@ -27,8 +26,6 @@ function EndpointsPageContent() {
 
   const [consumerId, setConsumerId] = useState<string>(queryConsumerId || '');
   const [consumer, setConsumer] = useState<Consumer | null>(null);
-  const [keys, setKeys] = useState<ConsumerKey[]>([]);
-  const [selectedKeyId, setSelectedKeyId] = useState<string>('');
   const [customApiKey, setCustomApiKey] = useState<string>('');
   const [routes, setRoutes] = useState<RouteItem[]>([]);
   const [services, setServices] = useState<ServiceItem[]>([]);
@@ -83,7 +80,7 @@ function EndpointsPageContent() {
       setRoutes(fetchedRoutes);
       setServices(fetchedServices);
 
-      // 2. Load consumer details and keys if consumerId is known
+      // 2. Load consumer details if consumerId is known
       let activeConsumerId = consumerId;
       if (!activeConsumerId) {
         const consumers = await adminApiClient.listConsumers().catch(() => [] as Consumer[]);
@@ -96,15 +93,6 @@ function EndpointsPageContent() {
         const c = await adminApiClient.getConsumer(activeConsumerId).catch(() => null);
         if (c) setConsumer(c);
       }
-
-      if (activeConsumerId) {
-        const consumerKeys = await adminApiClient.listConsumerKeys(activeConsumerId).catch(() => [] as ConsumerKey[]);
-        setKeys(consumerKeys);
-        const activeKey = consumerKeys.find((k) => k.status === 'ACTIVE') || consumerKeys[0];
-        if (activeKey) {
-          setSelectedKeyId(activeKey.id);
-        }
-      }
     } catch (err: any) {
       setErrorMessage(err?.message || 'Failed to load gateway topology');
     } finally {
@@ -115,10 +103,6 @@ function EndpointsPageContent() {
   useEffect(() => {
     loadData();
   }, [loadData]);
-
-  const getSelectedKey = (): ConsumerKey | undefined => {
-    return keys.find((k) => k.id === selectedKeyId);
-  };
 
   const handleTestRoute = async (route: RouteItem, service?: ServiceItem) => {
     const routeKey = route.id;
@@ -229,9 +213,28 @@ function EndpointsPageContent() {
               <button
                 onClick={handleTestAll}
                 className="btn btn-primary"
-                style={{ backgroundColor: theme.accent, fontSize: '13.5px' }}
+                style={{
+                  backgroundColor: theme.accent,
+                  fontSize: '13.5px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
               >
-                ⚡ Probe All Routes
+                <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <polygon points="5 3 19 12 5 21 5 3" />
+                </svg>
+                <span>Probe All Routes</span>
               </button>
             )}
           </div>
@@ -254,7 +257,7 @@ function EndpointsPageContent() {
           </div>
         )}
 
-        {/* Control Bar: Active Consumer & Key Selector */}
+        {/* Control Bar: Active Consumer & Live Request Key */}
         <div
           className="card"
           style={{
@@ -304,40 +307,23 @@ function EndpointsPageContent() {
               </span>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <label style={{ fontSize: '13px', fontWeight: 600, color: theme.muted }}>
-                Registered Key:
-              </label>
-              {keys.length === 0 ? (
-                <span style={{ fontSize: '13px', color: theme.danger }}>
-                  No keys found.{' '}
-                  <Link
-                    href={`/keys?consumerId=${encodeURIComponent(consumerId)}`}
-                    style={{ color: theme.accent, textDecoration: 'underline' }}
-                  >
-                    Issue a key
-                  </Link>
-                </span>
-              ) : (
-                <select
-                  value={selectedKeyId}
-                  onChange={(e) => setSelectedKeyId(e.target.value)}
-                  style={{
-                    fontSize: '13px',
-                    padding: '6px 12px',
-                    borderRadius: theme.radiusControl,
-                    border: `1px solid ${theme.border}`,
-                    width: 'auto',
-                  }}
-                >
-                  {keys.map((k) => (
-                    <option key={k.id} value={k.id}>
-                      {k.name || 'key'} ({k.keyPrefix || k.id.slice(0, 8)}...) — {k.status}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
+            {consumerId && (
+              <Link
+                href={`/keys?consumerId=${encodeURIComponent(consumerId)}`}
+                style={{
+                  fontSize: '13px',
+                  color: theme.accent,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  textDecoration: 'none',
+                  fontWeight: 500,
+                }}
+              >
+                <span>Issue & manage keys</span>
+                <span aria-hidden="true">&rarr;</span>
+              </Link>
+            )}
           </div>
 
           {/* Dedicated API Key Input Field (In-Memory Only) */}
@@ -345,8 +331,8 @@ function EndpointsPageContent() {
             style={{
               display: 'flex',
               flexDirection: 'column',
-              gap: '6px',
-              paddingTop: '14px',
+              gap: '8px',
+              paddingTop: '16px',
               borderTop: `1px solid ${theme.border}`,
             }}
           >
@@ -367,7 +353,7 @@ function EndpointsPageContent() {
                     textDecoration: 'underline',
                   }}
                 >
-                  Clear key (test 401 Unauthorized)
+                  Clear key (test unauthenticated 401)
                 </button>
               )}
             </div>
@@ -403,25 +389,85 @@ function EndpointsPageContent() {
                   } catch {}
                 }}
                 className="btn btn-outline btn-sm"
-                style={{ fontSize: '12px', padding: '8px 12px', whiteSpace: 'nowrap' }}
+                style={{
+                  fontSize: '12px',
+                  padding: '8px 12px',
+                  whiteSpace: 'nowrap',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
               >
-                📋 Paste from Clipboard
+                <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                </svg>
+                <span>Paste from Clipboard</span>
               </button>
             </div>
 
             <div style={{ fontSize: '12px', color: theme.muted, marginTop: '2px' }}>
               {customApiKey ? (
-                <span style={{ color: theme.success, fontWeight: 500 }}>
-                  ✓ In-memory key supplied: <code className="mono">{customApiKey.slice(0, 16)}••••••••</code> (will send via <code className="mono">X-Api-Key</code> header)
+                <span
+                  style={{
+                    color: theme.success,
+                    fontWeight: 500,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                >
+                  <svg
+                    width="13"
+                    height="13"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  <span>
+                    In-memory key supplied: <code className="mono">{customApiKey.slice(0, 16)}••••••••</code> (will send via <code className="mono">X-Api-Key</code> header)
+                  </span>
                 </span>
               ) : (
-                <span>
-                  🔒 <strong>Security Policy:</strong> Raw API keys are never cached in browser storage or saved in plaintext on the server.
-                  Copy your secret key when issuing it on the{' '}
-                  <Link href={`/keys?consumerId=${encodeURIComponent(consumerId)}`} style={{ color: theme.accent, textDecoration: 'underline' }}>
-                    API Keys page
-                  </Link>
-                  , and paste it above to test authenticated 200 OK responses.
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                  <svg
+                    width="13"
+                    height="13"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
+                  <span>
+                    <strong>Security Policy:</strong> Raw API keys are never cached in browser storage or saved in plaintext on the server.
+                    Copy your secret key when issuing it on the{' '}
+                    <Link href={`/keys?consumerId=${encodeURIComponent(consumerId)}`} style={{ color: theme.accent, textDecoration: 'underline' }}>
+                      API Keys page
+                    </Link>
+                    , and paste it above to test authenticated 200 OK responses.
+                  </span>
                 </span>
               )}
             </div>
@@ -462,8 +508,7 @@ function EndpointsPageContent() {
                 stripPath: route.stripPath !== false,
               };
 
-              const selectedKey = getSelectedKey();
-              const effectiveKey = customApiKey.trim() || selectedKey?.keyPrefix || selectedKey?.id;
+              const effectiveKey = customApiKey.trim();
 
               return (
                 <EndpointSchematicCard
@@ -473,7 +518,7 @@ function EndpointsPageContent() {
                     method: route.methods ? route.methods.split(',')[0].trim() : 'GET',
                     path: route.paths || route.path || '/',
                     headers: {
-                      'X-Api-Key': effectiveKey || '••••••••',
+                      'X-Api-Key': effectiveKey || '(none - unauthenticated)',
                     },
                   }}
                   response={responses[route.id]}
