@@ -184,7 +184,12 @@ export function ApiKeyManager({
             justifyContent: 'space-between',
           }}
         >
-          <span>✓ {toastMessage}</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            {toastMessage}
+          </span>
           <button
             onClick={() => setToastMessage(null)}
             style={{
@@ -192,10 +197,16 @@ export function ApiKeyManager({
               border: 'none',
               cursor: 'pointer',
               color: 'inherit',
-              fontWeight: 700,
+              padding: '2px',
+              display: 'inline-flex',
+              alignItems: 'center',
             }}
+            aria-label="Dismiss message"
           >
-            ×
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
           </button>
         </div>
       )}
@@ -298,7 +309,16 @@ export function ApiKeyManager({
                 minWidth: '90px',
               }}
             >
-              {copied ? '✓ Copied!' : 'Copy Key'}
+              {copied ? (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                  Copied
+                </span>
+              ) : (
+                'Copy Key'
+              )}
             </button>
           </div>
         </div>

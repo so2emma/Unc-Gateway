@@ -52,7 +52,8 @@ export function EndpointSchematicCard({
   const isError = response && (response.status ? response.status >= 400 : !!response.error);
 
   const displayMaskedKey = (key?: string) => {
-    if (!key) return 'unc_key_••••••••••••';
+    if (!key) return '(none - unauthenticated)';
+    if (key === '(none - unauthenticated)' || key.includes('••••')) return key;
     if (key.length <= 16) return `${key}••••`;
     return `${key.slice(0, 12)}••••••••••••`;
   };
@@ -138,10 +139,23 @@ export function EndpointSchematicCard({
               style={{
                 backgroundColor: theme.accent,
                 fontFamily: theme.fontFamily,
-                minWidth: '110px',
+                minWidth: '120px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
               }}
             >
-              {isLoading ? 'Executing...' : '⚡ Send Request'}
+              {isLoading ? (
+                'Executing...'
+              ) : (
+                <>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                  </svg>
+                  <span>Send Request</span>
+                </>
+              )}
             </button>
           )}
         </div>
@@ -311,9 +325,22 @@ export function EndpointSchematicCard({
                   fontSize: '11px',
                   color: theme.accent,
                   fontWeight: 600,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
                 }}
               >
-                ● Dynamic Cache Active
+                <span
+                  style={{
+                    width: '6px',
+                    height: '6px',
+                    borderRadius: '50%',
+                    backgroundColor: theme.accent,
+                    display: 'inline-block',
+                  }}
+                  aria-hidden="true"
+                />
+                Dynamic Cache Active
               </span>
             </div>
           </div>
