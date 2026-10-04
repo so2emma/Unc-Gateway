@@ -4,9 +4,11 @@ import com.unc.gateway.plugins.api.PluginRegistry;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.reactive.function.client.WebClient;
 
 @SpringBootApplication(scanBasePackages = {"com.unc.gateway.core", "com.unc.gateway.plugins"})
+@EnableScheduling
 public class GatewayCoreApplication {
 
     public static void main(String[] args) {
