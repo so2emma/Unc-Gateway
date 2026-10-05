@@ -23,11 +23,10 @@ export const OperatorSidebar: React.FC = () => {
       active: pathname.startsWith('/consumers'),
     },
     {
-      name: 'Traffic & Pulse',
+      name: 'Traffic Pulse',
       href: '/traffic',
       icon: ActivityIcon,
       active: pathname.startsWith('/traffic'),
-      badge: 'Phase 21',
     },
     {
       name: 'Tenants & Auth',
