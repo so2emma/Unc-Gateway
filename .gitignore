@@ -26,6 +26,11 @@ target/
 *.log
 logs/
 
+# JMeter outputs
+*.jtl
+jmeter/html_report/
+jmeter
+
 # Node.js
 node_modules/
 dist/
