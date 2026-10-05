@@ -34,6 +34,24 @@ services:
       postgres:
         condition: service_healthy
 
+  analytics-api:
+    build:
+      context: .
+      dockerfile: analytics-api/Dockerfile
+    container_name: unc-analytics-api
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_R2DBC_URL: r2dbc:postgresql://postgres:5432/unc_db
+      SPRING_R2DBC_USERNAME: postgres
+      SPRING_R2DBC_PASSWORD: postgrespassword
+      SERVER_PORT: 8083
+    depends_on:
+      postgres:
+        condition: service_healthy
+      admin-api:
+        condition: service_started
+
   mock-upstream:
     build:
       context: .
