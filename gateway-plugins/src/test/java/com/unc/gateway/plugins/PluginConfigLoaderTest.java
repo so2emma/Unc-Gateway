@@ -79,4 +79,32 @@ class PluginConfigLoaderTest {
         assertThat(pluginConfig.getConfig()).containsEntry("limit", 100);
         assertThat(pluginConfig.getConfig()).containsEntry("window_seconds", 60);
     }
+
+    @Test
+    @DisplayName("PluginConfigLoader: mapRow converts R2DBC Json object to config map")
+    void testMapRowWithR2dbcJson() {
+        Row row = Mockito.mock(Row.class);
+        RowMetadata meta = Mockito.mock(RowMetadata.class);
+
+        UUID id = UUID.randomUUID();
+        UUID tenantId = UUID.randomUUID();
+
+        when(row.get("id", UUID.class)).thenReturn(id);
+        when(row.get("tenant_id", UUID.class)).thenReturn(tenantId);
+        when(row.get("name", String.class)).thenReturn("rate-limit");
+        when(row.get("ordering", Integer.class)).thenReturn(2);
+        when(row.get("enabled", Boolean.class)).thenReturn(true);
+        when(row.get("config")).thenReturn(io.r2dbc.postgresql.codec.Json.of("{\"limit\":5,\"window_seconds\":60}"));
+
+        PluginConfigLoader loader = new PluginConfigLoader(Mockito.mock(DatabaseClient.class));
+        PluginConfig pluginConfig = loader.mapRow(row, meta);
+
+        assertThat(pluginConfig.getId()).isEqualTo(id.toString());
+        assertThat(pluginConfig.getTenantId()).isEqualTo(tenantId.toString());
+        assertThat(pluginConfig.getName()).isEqualTo("rate-limit");
+        assertThat(pluginConfig.getOrder()).isEqualTo(2);
+        assertThat(pluginConfig.isEnabled()).isTrue();
+        assertThat(pluginConfig.getConfig()).containsEntry("limit", 5);
+        assertThat(pluginConfig.getConfig()).containsEntry("window_seconds", 60);
+    }
 }

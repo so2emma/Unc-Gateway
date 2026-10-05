@@ -213,13 +213,24 @@ public class PluginConfigLoader implements ApplicationRunner {
         if (configObj instanceof Map<?, ?> map) {
             return (Map<String, Object>) map;
         }
-        String str = configObj.toString();
-        if (str.isBlank()) {
+        String str;
+        if (configObj instanceof io.r2dbc.postgresql.codec.Json r2dbcJson) {
+            str = r2dbcJson.asString();
+        } else {
+            try {
+                var method = configObj.getClass().getMethod("asString");
+                str = (String) method.invoke(configObj);
+            } catch (Exception ignored) {
+                str = configObj.toString();
+            }
+        }
+        if (str == null || str.isBlank()) {
             return Collections.emptyMap();
         }
         try {
             return objectMapper.readValue(str, new TypeReference<Map<String, Object>>() {});
         } catch (JsonProcessingException e) {
+            log.warn("Failed to parse plugin config JSON: {}, error: {}", str, e.getMessage());
             return Collections.emptyMap();
         }
     }
