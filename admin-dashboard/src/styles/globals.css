@@ -4,13 +4,16 @@
   /* Ignite Dark Operator Surface Tokens */
   --bg-dark: #15171C;
   --surface-dark: #1C1F26;
+  --surface-dark-raised: #22252D;
   --surface-elevated: #222630;
   --surface-hover: #252934;
   --border-dark: #2A2E37;
   --border-light: #373C48;
 
   --text-primary: #F5F6F8;
+  --text-dark: #F5F6F8;
   --text-muted: #8B93A1;
+  --muted-dark: #8B93A1;
 
   --accent: #FF6B35;
   --accent-hover: #FF8554;
@@ -344,3 +347,183 @@ html, body {
   gap: 10px;
   background: #171920;
 }
+
+/* ===== Ignite Traffic Pulse & Metrics Classes (Authoritative Reference) ===== */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 600;
+}
+.pill-accent {
+  background: rgba(255, 107, 53, 0.15);
+  color: var(--accent);
+}
+.pill-success {
+  background: rgba(28, 174, 104, 0.15);
+  color: #3DD68C;
+}
+.pill-warning {
+  background: rgba(245, 166, 35, 0.15);
+  color: #FBBF4C;
+}
+.pill-danger {
+  background: rgba(229, 72, 77, 0.15);
+  color: #F57075;
+}
+.pill-muted {
+  background: rgba(139, 147, 161, 0.15);
+  color: var(--muted-dark);
+}
+
+/* 4-Card Metric Strip */
+.metrics-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  margin-bottom: 24px;
+}
+@media (max-width: 900px) {
+  .metrics-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 540px) {
+  .metrics-row {
+    grid-template-columns: 1fr;
+  }
+}
+.metric-card {
+  padding: 22px;
+}
+.metric-label {
+  font-size: 12px;
+  color: var(--muted-dark);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  margin-bottom: 10px;
+}
+.metric-value {
+  font-size: 28px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  color: var(--text-dark);
+  line-height: 1.1;
+}
+.metric-value.warn {
+  color: var(--warning);
+}
+.metric-sub {
+  font-size: 12px;
+  color: var(--muted-dark);
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Waveform Oscilloscope Panel */
+.wave-panel {
+  padding: 28px;
+  margin-bottom: 24px;
+}
+.wave-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+.wave-title {
+  font-weight: 700;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  color: var(--text-dark);
+}
+.live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--success);
+  display: inline-block;
+  margin-right: 8px;
+  box-shadow: 0 0 0 0 rgba(28, 174, 104, 0.5);
+  animation: livePulse 1.6s infinite;
+}
+@keyframes livePulse {
+  0% { box-shadow: 0 0 0 0 rgba(28, 174, 104, 0.5); }
+  70% { box-shadow: 0 0 0 6px rgba(28, 174, 104, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(28, 174, 104, 0); }
+}
+
+.scope-wrap {
+  position: relative;
+  height: 220px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: repeating-linear-gradient(90deg, rgba(255,255,255,.03) 0 1px, transparent 1px 48px),
+              repeating-linear-gradient(0deg, rgba(255,255,255,.03) 0 1px, transparent 1px 36px),
+              var(--surface-dark-raised);
+}
+
+/* Latency Panel matching preview/admin-traffic.html */
+.lat-panel {
+  padding: 0;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+.lat-head {
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--border-dark);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--text-dark);
+}
+.lat-panel table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  table-layout: fixed;
+}
+.lat-panel th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--muted-dark);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border-dark);
+  background: var(--surface-dark);
+}
+.lat-panel th:nth-child(1) { width: 36%; }
+.lat-panel th:nth-child(2) { width: 16%; }
+.lat-panel th:nth-child(3) { width: 16%; }
+.lat-panel th:nth-child(4) { width: 16%; }
+.lat-panel th:nth-child(5) { width: 16%; }
+
+.lat-panel td {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border-dark);
+  vertical-align: middle;
+  color: var(--text-dark);
+}
+.lat-panel tbody tr {
+  transition: background .12s ease;
+}
+.lat-panel tbody tr:hover {
+  background: rgba(255, 107, 53, .08);
+}
+.lat-panel tbody tr:last-child td {
+  border-bottom: none;
+}
+.id-mono {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--text-dark);
+}
+
