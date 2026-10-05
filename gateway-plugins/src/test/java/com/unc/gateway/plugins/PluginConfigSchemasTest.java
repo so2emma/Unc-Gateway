@@ -179,4 +179,76 @@ class PluginConfigSchemasTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("'renameHeaders' must be an object");
     }
+
+    private final LoggingFilterConfig loggingFilterConfig = new LoggingFilterConfig();
+    private final LoggingConfigSchema loggingConfigSchema = new LoggingConfigSchema();
+
+    @Test
+    @DisplayName("LoggingFilterConfig: accepts empty config and default values")
+    void testLoggingValidEmpty() {
+        assertThatCode(() -> loggingFilterConfig.validate(Map.of())).doesNotThrowAnyException();
+        assertThatCode(() -> loggingConfigSchema.validate(Map.of())).doesNotThrowAnyException();
+        assertThat(LoggingFilterConfig.extractLevel(Map.of())).isEqualTo("INFO");
+        assertThat(LoggingFilterConfig.shouldIncludeHeaders(Map.of())).isFalse();
+        assertThat(LoggingFilterConfig.shouldIncludeRequestHeaders(Map.of())).isFalse();
+        assertThat(LoggingFilterConfig.shouldIncludeResponseHeaders(Map.of())).isFalse();
+        assertThat(LoggingFilterConfig.shouldIncludeBody(Map.of())).isFalse();
+
+        LoggingFilterConfig typed = LoggingFilterConfig.fromConfig(Map.of());
+        assertThat(typed.getLevel()).isEqualTo("INFO");
+        assertThat(typed.isIncludeHeaders()).isFalse();
+        assertThat(typed.isIncludeRequestHeaders()).isFalse();
+        assertThat(typed.isIncludeResponseHeaders()).isFalse();
+        assertThat(typed.isIncludeBody()).isFalse();
+    }
+
+    @Test
+    @DisplayName("LoggingFilterConfig: accepts valid levels and boolean flags in snake_case and camelCase")
+    void testLoggingValidCustom() {
+        Map<String, Object> config1 = Map.of(
+                "level", "DEBUG",
+                "include_headers", true,
+                "include_body", false
+        );
+        assertThatCode(() -> loggingFilterConfig.validate(config1)).doesNotThrowAnyException();
+        assertThat(LoggingFilterConfig.extractLevel(config1)).isEqualTo("DEBUG");
+        assertThat(LoggingFilterConfig.shouldIncludeHeaders(config1)).isTrue();
+        assertThat(LoggingFilterConfig.shouldIncludeBody(config1)).isFalse();
+
+        Map<String, Object> config2 = Map.of(
+                "log_level", "WARN",
+                "includeHeaders", true,
+                "includeRequestHeaders", true,
+                "includeResponseHeaders", false
+        );
+        assertThatCode(() -> loggingFilterConfig.validate(config2)).doesNotThrowAnyException();
+        assertThat(LoggingFilterConfig.extractLevel(config2)).isEqualTo("WARN");
+        assertThat(LoggingFilterConfig.shouldIncludeHeaders(config2)).isTrue();
+        assertThat(LoggingFilterConfig.shouldIncludeRequestHeaders(config2)).isTrue();
+        assertThat(LoggingFilterConfig.shouldIncludeResponseHeaders(config2)).isFalse();
+
+        Map<String, Object> config3 = Map.of("logLevel", "ERROR");
+        assertThatCode(() -> loggingFilterConfig.validate(config3)).doesNotThrowAnyException();
+        assertThat(LoggingFilterConfig.extractLevel(config3)).isEqualTo("ERROR");
+    }
+
+    @Test
+    @DisplayName("LoggingFilterConfig: rejects unsupported levels, non-boolean flags, or unknown fields")
+    void testLoggingInvalid() {
+        assertThatThrownBy(() -> loggingFilterConfig.validate(Map.of("level", "VERBOSE")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("unsupported 'level' value 'VERBOSE'");
+
+        assertThatThrownBy(() -> loggingFilterConfig.validate(Map.of("level", "   ")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("'level' must be a non-empty string");
+
+        assertThatThrownBy(() -> loggingFilterConfig.validate(Map.of("include_headers", "true")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("'include_headers' must be a boolean");
+
+        assertThatThrownBy(() -> loggingFilterConfig.validate(Map.of("unknown_key", "value")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("unknown config field 'unknown_key'");
+    }
 }

@@ -173,12 +173,17 @@ public final class BuiltInPluginSchemas {
         }
     }
 
-    /** {@code logging}: optional {@code level} restricted to the supported log levels. */
+    /** {@code logging}: optional {@code level} restricted to the supported log levels, plus flags for headers and body. */
     static void validateLogging(Map<String, Object> config) {
         if (config == null || config.isEmpty()) {
             return;
         }
-        rejectUnknownKeys(LOGGING, config, Set.of("level", "include_body"));
+        rejectUnknownKeys(LOGGING, config, Set.of(
+                "level", "log_level", "logLevel",
+                "include_headers", "includeHeaders",
+                "include_request_headers", "includeRequestHeaders",
+                "include_response_headers", "includeResponseHeaders",
+                "include_body", "includeBody"));
         if (config.containsKey("level")) {
             String level = requireString(LOGGING, config, "level");
             if (!SUPPORTED_LOG_LEVELS.contains(level.toUpperCase())) {
@@ -186,8 +191,28 @@ public final class BuiltInPluginSchemas {
                         + "', expected one of " + SUPPORTED_LOG_LEVELS);
             }
         }
-        if (config.containsKey("include_body")) {
-            requireBoolean(LOGGING, config, "include_body");
+        if (config.containsKey("log_level")) {
+            String level = requireString(LOGGING, config, "log_level");
+            if (!SUPPORTED_LOG_LEVELS.contains(level.toUpperCase())) {
+                throw new IllegalArgumentException("logging: unsupported 'level' value '" + level
+                        + "', expected one of " + SUPPORTED_LOG_LEVELS);
+            }
+        }
+        if (config.containsKey("logLevel")) {
+            String level = requireString(LOGGING, config, "logLevel");
+            if (!SUPPORTED_LOG_LEVELS.contains(level.toUpperCase())) {
+                throw new IllegalArgumentException("logging: unsupported 'level' value '" + level
+                        + "', expected one of " + SUPPORTED_LOG_LEVELS);
+            }
+        }
+        for (String field : List.of(
+                "include_headers", "includeHeaders",
+                "include_request_headers", "includeRequestHeaders",
+                "include_response_headers", "includeResponseHeaders",
+                "include_body", "includeBody")) {
+            if (config.containsKey(field)) {
+                requireBoolean(LOGGING, config, field);
+            }
         }
     }
 
