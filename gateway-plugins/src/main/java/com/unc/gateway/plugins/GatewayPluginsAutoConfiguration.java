@@ -65,13 +65,20 @@ public class GatewayPluginsAutoConfiguration {
     }
 
     @Bean
+    @ConditionalOnMissingBean
+    public LoggingFilter loggingFilter(@Autowired(required = false) LoggingFilter.LogSink logSink) {
+        return logSink != null ? new LoggingFilter(logSink) : new LoggingFilter();
+    }
+
+    @Bean
     public PluginRegistrationInitializer pluginRegistrationInitializer(
             @Autowired(required = false) PluginRegistry registry,
             @Autowired(required = false) KeyAuthFilter keyAuthFilter,
             @Autowired(required = false) RateLimitFilter rateLimitFilter,
             @Autowired(required = false) JwtAuthFilter jwtAuthFilter,
-            @Autowired(required = false) RequestTransformFilter requestTransformFilter) {
-        return new PluginRegistrationInitializer(registry, keyAuthFilter, rateLimitFilter, jwtAuthFilter, requestTransformFilter);
+            @Autowired(required = false) RequestTransformFilter requestTransformFilter,
+            @Autowired(required = false) LoggingFilter loggingFilter) {
+        return new PluginRegistrationInitializer(registry, keyAuthFilter, rateLimitFilter, jwtAuthFilter, requestTransformFilter, loggingFilter);
     }
 
     public static class PluginRegistrationInitializer {
@@ -81,6 +88,16 @@ public class GatewayPluginsAutoConfiguration {
                 RateLimitFilter rateLimitFilter,
                 JwtAuthFilter jwtAuthFilter,
                 RequestTransformFilter requestTransformFilter) {
+            this(registry, keyAuthFilter, rateLimitFilter, jwtAuthFilter, requestTransformFilter, null);
+        }
+
+        public PluginRegistrationInitializer(
+                PluginRegistry registry,
+                KeyAuthFilter keyAuthFilter,
+                RateLimitFilter rateLimitFilter,
+                JwtAuthFilter jwtAuthFilter,
+                RequestTransformFilter requestTransformFilter,
+                LoggingFilter loggingFilter) {
             if (registry != null) {
                 if (keyAuthFilter != null && !registry.isRegistered("key-auth")) {
                     registry.register("key-auth", keyAuthFilter, new KeyAuthConfigSchema());
@@ -93,6 +110,9 @@ public class GatewayPluginsAutoConfiguration {
                 }
                 if (requestTransformFilter != null && !registry.isRegistered("request-transform")) {
                     registry.register("request-transform", requestTransformFilter, new RequestTransformConfigSchema());
+                }
+                if (loggingFilter != null && !registry.isRegistered("logging")) {
+                    registry.register("logging", loggingFilter, new LoggingFilterConfig());
                 }
             }
         }
