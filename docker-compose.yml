@@ -120,10 +120,13 @@ services:
     environment:
       ADMIN_API_URL: http://admin-api:8081
       NEXT_PUBLIC_ADMIN_API_URL: http://admin-api:8081
+      ANALYTICS_API_URL: http://analytics-api:8083
+      NEXT_PUBLIC_ANALYTICS_API_URL: http://analytics-api:8083
       DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-}
       DEFAULT_ADMIN_API_KEY: ${DEFAULT_ADMIN_API_KEY:-}
     depends_on:
       - admin-api
+      - analytics-api
 
 volumes:
   postgres_data:
