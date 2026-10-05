@@ -92,6 +92,22 @@ services:
     depends_on:
       - admin-api
 
+  admin-dashboard:
+    build:
+      context: ./admin-dashboard
+      dockerfile: Dockerfile
+    container_name: unc-admin-dashboard
+    ports:
+      - "3001:3000"
+    environment:
+      ADMIN_API_URL: http://admin-api:8081
+      NEXT_PUBLIC_ADMIN_API_URL: http://admin-api:8081
+      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-}
+      DEFAULT_ADMIN_API_KEY: ${DEFAULT_ADMIN_API_KEY:-}
+    depends_on:
+      - admin-api
+
 volumes:
   postgres_data:
+
 
