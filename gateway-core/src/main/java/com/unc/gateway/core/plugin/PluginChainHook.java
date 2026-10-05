@@ -7,6 +7,7 @@ import com.unc.gateway.plugins.api.PluginRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
@@ -61,8 +62,16 @@ public class PluginChainHook {
 
         return filterChain.filter(exchange)
                 .then(Mono.defer(() -> {
-                    if (exchange.getResponse().getStatusCode() != null) {
-                        ResponseEntity.BodyBuilder builder = ResponseEntity.status(exchange.getResponse().getStatusCode());
+                    boolean isShortCircuited = exchange.getResponse().isCommitted()
+                            || (exchange.getResponse().getStatusCode() != null
+                            && !exchange.getResponse().getStatusCode().is2xxSuccessful());
+
+                    if (isShortCircuited) {
+                        ResponseEntity.BodyBuilder builder = ResponseEntity.status(
+                                exchange.getResponse().getStatusCode() != null
+                                        ? exchange.getResponse().getStatusCode()
+                                        : HttpStatus.OK
+                        );
                         exchange.getResponse().getHeaders().forEach((key, values) -> {
                             builder.header(key, values.toArray(new String[0]));
                         });

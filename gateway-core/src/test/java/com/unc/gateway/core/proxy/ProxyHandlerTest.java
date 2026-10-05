@@ -34,19 +34,27 @@ class ProxyHandlerTest {
     @Autowired
     private RouteCache routeCache;
 
+    @Autowired
+    private com.unc.gateway.plugins.api.PluginRegistry pluginRegistry;
+
     @MockBean
     private RouteCacheLoader routeCacheLoader;
 
+    @MockBean
+    private com.unc.gateway.plugins.PluginConfigLoader pluginConfigLoader;
+
     private MockWebServer mockWebServer;
+    private UUID testTenantId;
 
     @BeforeEach
     void setUp() throws IOException {
         mockWebServer = new MockWebServer();
         mockWebServer.start();
+        testTenantId = UUID.randomUUID();
 
         String upstreamUrl = mockWebServer.url("/echo").toString().replaceAll("/$", "");
         routeCache.bulkReplace(List.of(
-                new RouteEntry("/proxy", UUID.randomUUID(), upstreamUrl)
+                new RouteEntry("/proxy", testTenantId, upstreamUrl)
         ));
     }
 
@@ -111,6 +119,48 @@ class ProxyHandlerTest {
                 .uri("/unknown/path")
                 .exchange()
                 .expectStatus().isNotFound();
+
+        assertThat(mockWebServer.getRequestCount()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("GET /proxy/hello - filter short-circuit on 401 Unauthorized terminates cleanly without upstream proxy")
+    void testShortCircuitUnauthorized() {
+        String pluginName = "test-auth-" + UUID.randomUUID();
+        pluginRegistry.register(pluginName, (ex, chain) -> {
+            ex.getResponse().setStatusCode(org.springframework.http.HttpStatus.UNAUTHORIZED);
+            return ex.getResponse().setComplete();
+        });
+
+        org.mockito.Mockito.when(pluginConfigLoader.getCachedConfigs(testTenantId))
+                .thenReturn(List.of(new com.unc.gateway.plugins.api.PluginConfig("c1", testTenantId.toString(), pluginName, 1, true, java.util.Map.of())));
+
+        webTestClient.get()
+                .uri("/proxy/hello")
+                .exchange()
+                .expectStatus().isUnauthorized();
+
+        assertThat(mockWebServer.getRequestCount()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("GET /proxy/hello - filter short-circuit on 429 Too Many Requests emits Retry-After header and terminates")
+    void testShortCircuitRateLimitedWithHeaders() {
+        String pluginName = "test-rate-limit-" + UUID.randomUUID();
+        pluginRegistry.register(pluginName, (ex, chain) -> {
+            ex.getResponse().setStatusCode(org.springframework.http.HttpStatus.TOO_MANY_REQUESTS);
+            ex.getResponse().getHeaders().set(org.springframework.http.HttpHeaders.RETRY_AFTER, "60");
+            return ex.getResponse().setComplete();
+        });
+
+        org.mockito.Mockito.when(pluginConfigLoader.getCachedConfigs(testTenantId))
+                .thenReturn(List.of(new com.unc.gateway.plugins.api.PluginConfig("c2", testTenantId.toString(), pluginName, 1, true, java.util.Map.of())));
+
+        webTestClient.get()
+                .uri("/proxy/hello")
+                .exchange()
+                .expectStatus().isEqualTo(org.springframework.http.HttpStatus.TOO_MANY_REQUESTS)
+                .expectHeader().valueEquals(org.springframework.http.HttpHeaders.RETRY_AFTER, "60");
 
         assertThat(mockWebServer.getRequestCount()).isEqualTo(0);
     }

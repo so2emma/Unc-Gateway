@@ -39,15 +39,33 @@ public class ProxyHandler {
                     HttpMethod method = request.getMethod();
 
                     return pluginChainHook.executeChain(exchange, Collections.emptyList(), () -> {
+                        String resolvedUri = targetUrl;
+                        try {
+                            URI parsedUri = URI.create(targetUrl);
+                            if (parsedUri.getPath() == null || parsedUri.getPath().isEmpty()) {
+                                resolvedUri = targetUrl.contains("?")
+                                        ? targetUrl.replace("?", "/?")
+                                        : targetUrl + "/";
+                            }
+                        } catch (Exception ignored) {
+                        }
+
                         WebClient.RequestBodySpec spec = webClient
                                 .method(method)
-                                .uri(URI.create(targetUrl))
+                                .uri(URI.create(resolvedUri))
                                 .headers(httpHeaders -> {
                                     httpHeaders.addAll(request.getHeaders());
                                     httpHeaders.remove(HttpHeaders.HOST);
                                 });
 
-                        return spec.body(request.getBody(), DataBuffer.class)
+                        WebClient.RequestHeadersSpec<?> headersSpec = spec;
+                        if (method != HttpMethod.GET && method != HttpMethod.HEAD) {
+                            headersSpec = spec.body(request.getBody(), DataBuffer.class);
+                        } else if (request.getHeaders().getContentLength() > 0) {
+                            headersSpec = spec.body(request.getBody(), DataBuffer.class);
+                        }
+
+                        return headersSpec
                                 .exchangeToMono(clientResponse ->
                                         clientResponse.bodyToMono(byte[].class)
                                                 .defaultIfEmpty(new byte[0])
@@ -62,6 +80,12 @@ public class ProxyHandler {
                                                 })
                                 );
                     });
+                })
+                .flatMap(responseEntity -> {
+                    if (exchange.getResponse().isCommitted()) {
+                        return Mono.empty();
+                    }
+                    return Mono.just(responseEntity);
                 })
                 .onErrorResume(ResponseStatusException.class, ex ->
                         Mono.just(ResponseEntity.status(ex.getStatusCode()).build())
