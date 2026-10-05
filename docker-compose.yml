@@ -24,6 +24,7 @@ services:
       dockerfile: admin-api/Dockerfile
     container_name: unc-admin-api
     ports:
+      - "8081:8081"
       - "8082:8081"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/unc_db
@@ -78,6 +79,7 @@ services:
       dockerfile: gateway-core/Dockerfile
     container_name: unc-gateway-core
     ports:
+      - "8000:8080"
       - "8080:8080"
     environment:
       SPRING_R2DBC_URL: r2dbc:postgresql://postgres:5432/unc_db
