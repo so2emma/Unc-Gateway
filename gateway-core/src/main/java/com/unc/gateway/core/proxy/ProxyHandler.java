@@ -23,12 +23,22 @@ public class ProxyHandler {
 
     private final DynamicRouteResolver dynamicRouteResolver;
     private final WebClient webClient;
+    private final UpstreamTlsSelector upstreamTlsSelector;
     private final PluginChainHook pluginChainHook;
 
-    public ProxyHandler(DynamicRouteResolver dynamicRouteResolver, WebClient webClient, PluginChainHook pluginChainHook) {
+    @org.springframework.beans.factory.annotation.Autowired
+    public ProxyHandler(DynamicRouteResolver dynamicRouteResolver,
+                        WebClient webClient,
+                        UpstreamTlsSelector upstreamTlsSelector,
+                        PluginChainHook pluginChainHook) {
         this.dynamicRouteResolver = dynamicRouteResolver;
         this.webClient = webClient;
+        this.upstreamTlsSelector = upstreamTlsSelector;
         this.pluginChainHook = pluginChainHook;
+    }
+
+    public ProxyHandler(DynamicRouteResolver dynamicRouteResolver, WebClient webClient, PluginChainHook pluginChainHook) {
+        this(dynamicRouteResolver, webClient, new UpstreamTlsSelector(webClient, webClient, webClient), pluginChainHook);
     }
 
     @RequestMapping("/**")
@@ -50,7 +60,12 @@ public class ProxyHandler {
                         } catch (Exception ignored) {
                         }
 
-                        WebClient.RequestBodySpec spec = webClient
+                        com.unc.gateway.core.cache.RouteEntry matchedRoute = exchange.getAttribute("matched_route");
+                        WebClient clientToUse = upstreamTlsSelector != null
+                                ? upstreamTlsSelector.selectClient(matchedRoute)
+                                : webClient;
+
+                        WebClient.RequestBodySpec spec = clientToUse
                                 .method(method)
                                 .uri(URI.create(resolvedUri))
                                 .headers(httpHeaders -> {

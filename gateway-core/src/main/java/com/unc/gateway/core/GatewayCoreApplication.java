@@ -19,9 +19,4 @@ public class GatewayCoreApplication {
     public PluginRegistry pluginRegistry() {
         return new PluginRegistry();
     }
-
-    @Bean
-    public WebClient webClient(WebClient.Builder builder) {
-        return builder.build();
-    }
 }

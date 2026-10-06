@@ -13,7 +13,9 @@ public record RouteEntry(
         UUID tenantId,
         String path,
         String upstreamUrl,
-        boolean stripPath
+        boolean stripPath,
+        boolean tlsEnabled,
+        boolean mtlsEnabled
 ) {
     public RouteEntry {
         Objects.requireNonNull(path, "path cannot be null");
@@ -23,12 +25,16 @@ public record RouteEntry(
         }
     }
 
+    public RouteEntry(UUID routeId, UUID serviceId, UUID tenantId, String path, String upstreamUrl, boolean stripPath) {
+        this(routeId, serviceId, tenantId, path, upstreamUrl, stripPath, false, false);
+    }
+
     public RouteEntry(String path, UUID tenantId, String upstreamUrl) {
-        this(UUID.randomUUID(), UUID.randomUUID(), tenantId, path, upstreamUrl, true);
+        this(UUID.randomUUID(), UUID.randomUUID(), tenantId, path, upstreamUrl, true, false, false);
     }
 
     public RouteEntry(UUID routeId, UUID serviceId, UUID tenantId, String path, String upstreamUrl) {
-        this(routeId, serviceId, tenantId, path, upstreamUrl, true);
+        this(routeId, serviceId, tenantId, path, upstreamUrl, true, false, false);
     }
 
     public UUID getRouteId() {
@@ -53,5 +59,13 @@ public record RouteEntry(
 
     public boolean isStripPath() {
         return stripPath;
+    }
+
+    public boolean isTlsEnabled() {
+        return tlsEnabled;
+    }
+
+    public boolean isMtlsEnabled() {
+        return mtlsEnabled;
     }
 }

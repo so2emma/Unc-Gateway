@@ -32,7 +32,9 @@ public class RouteCacheLoader implements ApplicationRunner {
                 COALESCE(r.tenant_id, s.tenant_id) AS tenant_id,
                 r.paths AS paths,
                 COALESCE(r.strip_path, TRUE) AS strip_path,
-                s.url AS upstream_url
+                s.url AS upstream_url,
+                COALESCE(s.tls_enabled, FALSE) AS tls_enabled,
+                COALESCE(s.mtls_enabled, FALSE) AS mtls_enabled
             FROM routes r
             JOIN services s ON r.service_id = s.id
             """;
@@ -44,7 +46,9 @@ public class RouteCacheLoader implements ApplicationRunner {
                 COALESCE(r.tenant_id, s.tenant_id) AS tenant_id,
                 r.paths AS paths,
                 COALESCE(r.strip_path, TRUE) AS strip_path,
-                s.url AS upstream_url
+                s.url AS upstream_url,
+                COALESCE(s.tls_enabled, FALSE) AS tls_enabled,
+                COALESCE(s.mtls_enabled, FALSE) AS mtls_enabled
             FROM routes r
             JOIN services s ON r.service_id = s.id
             WHERE r.id = :routeId
@@ -57,7 +61,9 @@ public class RouteCacheLoader implements ApplicationRunner {
                 COALESCE(r.tenant_id, s.tenant_id) AS tenant_id,
                 r.paths AS paths,
                 COALESCE(r.strip_path, TRUE) AS strip_path,
-                s.url AS upstream_url
+                s.url AS upstream_url,
+                COALESCE(s.tls_enabled, FALSE) AS tls_enabled,
+                COALESCE(s.mtls_enabled, FALSE) AS mtls_enabled
             FROM routes r
             JOIN services s ON r.service_id = s.id
             WHERE r.service_id = :serviceId
@@ -142,6 +148,8 @@ public class RouteCacheLoader implements ApplicationRunner {
         String paths = row.get("paths", String.class);
         Boolean stripPath = row.get("strip_path", Boolean.class);
         String upstreamUrl = row.get("upstream_url", String.class);
+        Boolean tlsEnabled = row.get("tls_enabled", Boolean.class);
+        Boolean mtlsEnabled = row.get("mtls_enabled", Boolean.class);
 
         return new RouteEntry(
                 routeId,
@@ -149,7 +157,9 @@ public class RouteCacheLoader implements ApplicationRunner {
                 tenantId,
                 paths != null ? paths : "/",
                 upstreamUrl != null ? upstreamUrl : "",
-                stripPath == null || stripPath
+                stripPath == null || stripPath,
+                Boolean.TRUE.equals(tlsEnabled),
+                Boolean.TRUE.equals(mtlsEnabled)
         );
     }
 
@@ -169,7 +179,9 @@ public class RouteCacheLoader implements ApplicationRunner {
                         entry.tenantId(),
                         trimmed,
                         entry.upstreamUrl(),
-                        entry.stripPath()
+                        entry.stripPath(),
+                        entry.tlsEnabled(),
+                        entry.mtlsEnabled()
                 ));
             }
         }

@@ -86,7 +86,9 @@ public class RouteChangeEventHandler {
                                         entry.tenantId(),
                                         trimmed,
                                         entry.upstreamUrl(),
-                                        entry.stripPath()
+                                        entry.stripPath(),
+                                        entry.tlsEnabled(),
+                                        entry.mtlsEnabled()
                                 ));
                             }
                         }
