@@ -56,3 +56,7 @@ yarn-error.log*
 *.cert
 *.p12
 *.jks
+*.srl
+pki/certs/
+pki/ca/
+**/src/test/resources/pki/
