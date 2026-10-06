@@ -45,6 +45,12 @@ public class ServiceManagementServiceImpl implements ServiceManagementService {
         if (dto.getReadTimeout() != null) {
             entity.setReadTimeout(dto.getReadTimeout());
         }
+        if (dto.getTlsEnabled() != null) {
+            entity.setTlsEnabled(dto.getTlsEnabled());
+        }
+        if (dto.getMtlsEnabled() != null) {
+            entity.setMtlsEnabled(dto.getMtlsEnabled());
+        }
 
         ServiceEntity saved = serviceRepository.save(entity);
         return toDto(saved);
@@ -87,6 +93,12 @@ public class ServiceManagementServiceImpl implements ServiceManagementService {
         if (dto.getReadTimeout() != null) {
             entity.setReadTimeout(dto.getReadTimeout());
         }
+        if (dto.getTlsEnabled() != null) {
+            entity.setTlsEnabled(dto.getTlsEnabled());
+        }
+        if (dto.getMtlsEnabled() != null) {
+            entity.setMtlsEnabled(dto.getMtlsEnabled());
+        }
 
         ServiceEntity updated = serviceRepository.save(entity);
         return toDto(updated);
@@ -109,6 +121,8 @@ public class ServiceManagementServiceImpl implements ServiceManagementService {
         dto.setUrl(entity.getUrl());
         dto.setConnectTimeout(entity.getConnectTimeout());
         dto.setReadTimeout(entity.getReadTimeout());
+        dto.setTlsEnabled(Boolean.TRUE.equals(entity.getTlsEnabled()));
+        dto.setMtlsEnabled(Boolean.TRUE.equals(entity.getMtlsEnabled()));
         dto.setCreatedAt(entity.getCreatedAt());
         dto.setUpdatedAt(entity.getUpdatedAt());
         return dto;

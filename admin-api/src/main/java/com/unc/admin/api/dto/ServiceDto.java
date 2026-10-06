@@ -18,6 +18,8 @@ public class ServiceDto {
 
     private Integer connectTimeout = 6000;
     private Integer readTimeout = 60000;
+    private Boolean tlsEnabled = false;
+    private Boolean mtlsEnabled = false;
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
 
@@ -90,6 +92,22 @@ public class ServiceDto {
 
     public void setCreatedAt(OffsetDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public Boolean getTlsEnabled() {
+        return tlsEnabled;
+    }
+
+    public void setTlsEnabled(Boolean tlsEnabled) {
+        this.tlsEnabled = tlsEnabled;
+    }
+
+    public Boolean getMtlsEnabled() {
+        return mtlsEnabled;
+    }
+
+    public void setMtlsEnabled(Boolean mtlsEnabled) {
+        this.mtlsEnabled = mtlsEnabled;
     }
 
     public OffsetDateTime getUpdatedAt() {

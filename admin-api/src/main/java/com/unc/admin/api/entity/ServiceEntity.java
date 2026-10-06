@@ -27,6 +27,12 @@ public class ServiceEntity {
     @Column(name = "read_timeout")
     private Integer readTimeout = 60000;
 
+    @Column(name = "tls_enabled", nullable = false)
+    private Boolean tlsEnabled = false;
+
+    @Column(name = "mtls_enabled", nullable = false)
+    private Boolean mtlsEnabled = false;
+
     @Column(name = "created_at")
     private OffsetDateTime createdAt;
 
@@ -109,6 +115,22 @@ public class ServiceEntity {
 
     public void setCreatedAt(OffsetDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public Boolean getTlsEnabled() {
+        return tlsEnabled;
+    }
+
+    public void setTlsEnabled(Boolean tlsEnabled) {
+        this.tlsEnabled = tlsEnabled;
+    }
+
+    public Boolean getMtlsEnabled() {
+        return mtlsEnabled;
+    }
+
+    public void setMtlsEnabled(Boolean mtlsEnabled) {
+        this.mtlsEnabled = mtlsEnabled;
     }
 
     public OffsetDateTime getUpdatedAt() {
