@@ -1,13 +1,21 @@
 package com.unc.admin.api.tenant;
 
 import com.unc.admin.api.repository.TenantRepository;
+import com.unc.admin.api.security.AdminPrincipal;
+import com.unc.admin.api.security.AdminRole;
+import com.unc.admin.api.security.TenantScopeGuard;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.HandlerInterceptor;
 
+import java.util.List;
 import java.util.UUID;
 
 @Component
@@ -33,6 +41,26 @@ public class TenantInterceptor implements HandlerInterceptor {
             return true;
         }
 
+        // Allow auth endpoints
+        if (uri.startsWith("/api/admin/auth")) {
+            return true;
+        }
+
+        // If request is authenticated via Spring Security (e.g. JWT or X-Admin-Api-Key)
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated() && auth.getPrincipal() instanceof AdminPrincipal) {
+            String rawTenantId = request.getHeader("X-Tenant-Id");
+            if (rawTenantId == null || rawTenantId.trim().isEmpty()) {
+                rawTenantId = request.getParameter("tenant_id");
+            }
+            if (rawTenantId != null && !rawTenantId.trim().isEmpty()) {
+                UUID tenantId = TenantScopeGuard.parseTenantId(rawTenantId.trim());
+                TenantContext.setTenantId(tenantId);
+            }
+            return true;
+        }
+
+        // Legacy / fallback auth via X-Api-Key
         String rawTenantId = request.getHeader("X-Tenant-Id");
         if (rawTenantId == null || rawTenantId.trim().isEmpty()) {
             rawTenantId = request.getParameter("tenant_id");
@@ -51,10 +79,8 @@ public class TenantInterceptor implements HandlerInterceptor {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "X-Api-Key header is required for authentication");
         }
 
-        UUID tenantId;
-        try {
-            tenantId = UUID.fromString(rawTenantId.trim());
-        } catch (IllegalArgumentException ex) {
+        UUID tenantId = TenantScopeGuard.parseTenantId(rawTenantId.trim());
+        if (tenantId == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "X-Tenant-Id header must be a valid UUID");
         }
 
@@ -62,6 +88,11 @@ public class TenantInterceptor implements HandlerInterceptor {
         if (!validAuth) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid tenant credentials or inactive tenant status");
         }
+
+        AdminPrincipal principal = new AdminPrincipal(tenantId, "legacy@" + tenantId, AdminRole.OPERATOR, tenantId);
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(principal, null, List.of(new SimpleGrantedAuthority("ROLE_OPERATOR")))
+        );
 
         TenantContext.setTenantId(tenantId);
         return true;
