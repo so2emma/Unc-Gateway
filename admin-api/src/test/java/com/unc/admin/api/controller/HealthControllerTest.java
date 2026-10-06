@@ -14,8 +14,12 @@ import javax.sql.DataSource;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import org.springframework.context.annotation.Import;
+import com.unc.admin.api.security.SecurityConfig;
+
 @WebMvcTest(HealthController.class)
 @AutoConfigureMockMvc
+@Import(SecurityConfig.class)
 class HealthControllerTest {
 
     @Autowired
