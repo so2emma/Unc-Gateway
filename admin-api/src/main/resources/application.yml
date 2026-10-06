@@ -1,9 +1,21 @@
 server:
-  port: 8081
+  port: ${SERVER_PORT:8081}
+  ssl:
+    bundle: ${SERVER_SSL_BUNDLE:}
 
 spring:
   application:
     name: admin-api
+  ssl:
+    bundle:
+      jks:
+        admin-server:
+          key:
+            alias: ${SPRING_SSL_BUNDLE_JKS_ADMIN_SERVER_KEY_ALIAS:admin-api}
+          keystore:
+            location: ${SPRING_SSL_BUNDLE_JKS_ADMIN_SERVER_KEYSTORE_LOCATION:}
+            password: ${SPRING_SSL_BUNDLE_JKS_ADMIN_SERVER_KEYSTORE_PASSWORD:changeit}
+            type: ${SPRING_SSL_BUNDLE_JKS_ADMIN_SERVER_KEYSTORE_TYPE:PKCS12}
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/unc_db}
     username: ${SPRING_DATASOURCE_USERNAME:postgres}
@@ -24,4 +36,5 @@ admin:
   jwt:
     secret: ${ADMIN_JWT_SECRET:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef}
     expiry-seconds: 900
+
 

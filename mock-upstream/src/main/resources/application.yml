@@ -1,6 +1,21 @@
 server:
-  port: 9090
+  port: ${SERVER_PORT:9090}
 
 spring:
   application:
     name: mock-upstream
+  ssl:
+    bundle:
+      jks:
+        mock-upstream-server:
+          key:
+            alias: ${SPRING_SSL_BUNDLE_JKS_MOCK_UPSTREAM_SERVER_KEY_ALIAS:mock-upstream}
+          keystore:
+            location: ${SPRING_SSL_BUNDLE_JKS_MOCK_UPSTREAM_SERVER_KEYSTORE_LOCATION:classpath:pki/certs/mock-upstream/keystore.p12}
+            password: ${SPRING_SSL_BUNDLE_JKS_MOCK_UPSTREAM_SERVER_KEYSTORE_PASSWORD:changeit}
+            type: ${SPRING_SSL_BUNDLE_JKS_MOCK_UPSTREAM_SERVER_KEYSTORE_TYPE:PKCS12}
+          truststore:
+            location: ${SPRING_SSL_BUNDLE_JKS_MOCK_UPSTREAM_SERVER_TRUSTSTORE_LOCATION:classpath:pki/certs/mock-upstream/keystore.p12}
+            password: ${SPRING_SSL_BUNDLE_JKS_MOCK_UPSTREAM_SERVER_TRUSTSTORE_PASSWORD:changeit}
+            type: ${SPRING_SSL_BUNDLE_JKS_MOCK_UPSTREAM_SERVER_TRUSTSTORE_TYPE:PKCS12}
+

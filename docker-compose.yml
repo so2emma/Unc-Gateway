@@ -24,14 +24,21 @@ services:
       dockerfile: admin-api/Dockerfile
     container_name: unc-admin-api
     ports:
-      - "8081:8081"
-      - "8082:8081"
+      - "8444:8444"
+      - "8081:8444"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/unc_db
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgrespassword
-      SERVER_PORT: 8081
+      SERVER_PORT: 8444
+      SERVER_SSL_BUNDLE: admin-server
+      SPRING_SSL_BUNDLE_JKS_ADMIN_SERVER_KEY_ALIAS: admin-api
+      SPRING_SSL_BUNDLE_JKS_ADMIN_SERVER_KEYSTORE_LOCATION: file:/pki/certs/admin-api/keystore.p12
+      SPRING_SSL_BUNDLE_JKS_ADMIN_SERVER_KEYSTORE_PASSWORD: changeit
+      SPRING_SSL_BUNDLE_JKS_ADMIN_SERVER_KEYSTORE_TYPE: PKCS12
       ADMIN_JWT_SECRET: ${ADMIN_JWT_SECRET:-0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef}
+    volumes:
+      - ./pki/certs/admin-api:/pki/certs/admin-api:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -42,12 +49,20 @@ services:
       dockerfile: analytics-api/Dockerfile
     container_name: unc-analytics-api
     ports:
-      - "8083:8083"
+      - "8445:8445"
+      - "8083:8445"
     environment:
       SPRING_R2DBC_URL: r2dbc:postgresql://postgres:5432/unc_db
       SPRING_R2DBC_USERNAME: postgres
       SPRING_R2DBC_PASSWORD: postgrespassword
-      SERVER_PORT: 8083
+      SERVER_PORT: 8445
+      SERVER_SSL_BUNDLE: analytics-server
+      SPRING_SSL_BUNDLE_JKS_ANALYTICS_SERVER_KEY_ALIAS: analytics-api
+      SPRING_SSL_BUNDLE_JKS_ANALYTICS_SERVER_KEYSTORE_LOCATION: file:/pki/certs/analytics-api/keystore.p12
+      SPRING_SSL_BUNDLE_JKS_ANALYTICS_SERVER_KEYSTORE_PASSWORD: changeit
+      SPRING_SSL_BUNDLE_JKS_ANALYTICS_SERVER_KEYSTORE_TYPE: PKCS12
+    volumes:
+      - ./pki/certs/analytics-api:/pki/certs/analytics-api:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -62,6 +77,15 @@ services:
     ports:
       - "9090:9090"
       - "8085:9090"
+    environment:
+      SERVER_PORT: 9090
+      SERVER_SSL_BUNDLE: mock-upstream-server
+      SPRING_SSL_BUNDLE_JKS_MOCK_UPSTREAM_SERVER_KEY_ALIAS: mock-upstream
+      SPRING_SSL_BUNDLE_JKS_MOCK_UPSTREAM_SERVER_KEYSTORE_LOCATION: file:/pki/certs/mock-upstream/keystore.p12
+      SPRING_SSL_BUNDLE_JKS_MOCK_UPSTREAM_SERVER_KEYSTORE_PASSWORD: changeit
+      SPRING_SSL_BUNDLE_JKS_MOCK_UPSTREAM_SERVER_KEYSTORE_TYPE: PKCS12
+    volumes:
+      - ./pki/certs/mock-upstream:/pki/certs/mock-upstream:ro
 
   redis:
     image: redis:7-alpine
@@ -80,16 +104,29 @@ services:
       dockerfile: gateway-core/Dockerfile
     container_name: unc-gateway-core
     ports:
-      - "8000:8080"
-      - "8080:8080"
+      - "8443:8443"
+      - "127.0.0.1:8000:8000"
     environment:
+      SERVER_PORT: 8443
+      GATEWAY_TLS_SERVER_ENABLED: "true"
+      GATEWAY_TLS_SERVER_KEYSTORE_PATH: /pki/certs/gateway-core/keystore.p12
+      GATEWAY_TLS_SERVER_KEYSTORE_PASSWORD: changeit
+      GATEWAY_TLS_SERVER_KEYSTORE_TYPE: PKCS12
+      GATEWAY_TLS_CLIENT_KEYSTORE_PATH: /pki/certs/gateway-core/keystore.p12
+      GATEWAY_TLS_CLIENT_KEYSTORE_PASSWORD: changeit
+      GATEWAY_TLS_CLIENT_KEYSTORE_TYPE: PKCS12
+      GATEWAY_TLS_CLIENT_TRUSTSTORE_PATH: /pki/certs/gateway-core/truststore.p12
+      GATEWAY_TLS_CLIENT_TRUSTSTORE_PASSWORD: changeit
+      GATEWAY_TLS_CLIENT_TRUSTSTORE_TYPE: PKCS12
       SPRING_R2DBC_URL: r2dbc:postgresql://postgres:5432/unc_db
       SPRING_R2DBC_USERNAME: postgres
       SPRING_R2DBC_PASSWORD: postgrespassword
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
-      UPSTREAM_BASE_URL: http://mock-upstream:9090
+      UPSTREAM_BASE_URL: https://mock-upstream:9090
       UPSTREAM_ROUTE_PREFIX: /proxy
+    volumes:
+      - ./pki/certs/gateway-core:/pki/certs/gateway-core:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -106,8 +143,9 @@ services:
     ports:
       - "3000:3000"
     environment:
-      ADMIN_API_URL: http://admin-api:8081
-      NEXT_PUBLIC_ADMIN_API_URL: http://admin-api:8081
+      ADMIN_API_URL: https://admin-api:8444
+      NEXT_PUBLIC_ADMIN_API_URL: https://admin-api:8444
+      NODE_TLS_REJECT_UNAUTHORIZED: "0"
       DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-}
       DEFAULT_ADMIN_API_KEY: ${DEFAULT_ADMIN_API_KEY:-}
     depends_on:
@@ -121,10 +159,11 @@ services:
     ports:
       - "3001:3000"
     environment:
-      ADMIN_API_URL: http://admin-api:8081
-      NEXT_PUBLIC_ADMIN_API_URL: http://admin-api:8081
-      ANALYTICS_API_URL: http://analytics-api:8083
-      NEXT_PUBLIC_ANALYTICS_API_URL: http://analytics-api:8083
+      ADMIN_API_URL: https://admin-api:8444
+      NEXT_PUBLIC_ADMIN_API_URL: https://admin-api:8444
+      ANALYTICS_API_URL: https://analytics-api:8445
+      NEXT_PUBLIC_ANALYTICS_API_URL: https://analytics-api:8445
+      NODE_TLS_REJECT_UNAUTHORIZED: "0"
       DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-}
       DEFAULT_ADMIN_API_KEY: ${DEFAULT_ADMIN_API_KEY:-}
     depends_on:
