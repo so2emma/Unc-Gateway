@@ -71,14 +71,49 @@ public class GatewayPluginsAutoConfiguration {
     }
 
     @Bean
+    @ConditionalOnMissingBean
+    public com.unc.gateway.plugins.oauth2.JwksKeyCache jwksKeyCache() {
+        return new com.unc.gateway.plugins.oauth2.JwksKeyCache();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public com.unc.gateway.plugins.oauth2.JwksJwtValidator jwksJwtValidator(
+            com.unc.gateway.plugins.oauth2.JwksKeyCache jwksKeyCache) {
+        return new com.unc.gateway.plugins.oauth2.JwksJwtValidator(jwksKeyCache);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public com.unc.gateway.plugins.oauth2.TokenIntrospectionClient tokenIntrospectionClient() {
+        return new com.unc.gateway.plugins.oauth2.TokenIntrospectionClient();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public com.unc.gateway.plugins.oauth2.ScopeEnforcer scopeEnforcer() {
+        return new com.unc.gateway.plugins.oauth2.ScopeEnforcer();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public com.unc.gateway.plugins.oauth2.OAuth2OidcFilter oauth2OidcFilter(
+            com.unc.gateway.plugins.oauth2.JwksJwtValidator jwksJwtValidator,
+            com.unc.gateway.plugins.oauth2.TokenIntrospectionClient tokenIntrospectionClient,
+            com.unc.gateway.plugins.oauth2.ScopeEnforcer scopeEnforcer) {
+        return new com.unc.gateway.plugins.oauth2.OAuth2OidcFilter(jwksJwtValidator, tokenIntrospectionClient, scopeEnforcer);
+    }
+
+    @Bean
     public PluginRegistrationInitializer pluginRegistrationInitializer(
             @Autowired(required = false) PluginRegistry registry,
             @Autowired(required = false) KeyAuthFilter keyAuthFilter,
             @Autowired(required = false) RateLimitFilter rateLimitFilter,
             @Autowired(required = false) JwtAuthFilter jwtAuthFilter,
             @Autowired(required = false) RequestTransformFilter requestTransformFilter,
-            @Autowired(required = false) LoggingFilter loggingFilter) {
-        return new PluginRegistrationInitializer(registry, keyAuthFilter, rateLimitFilter, jwtAuthFilter, requestTransformFilter, loggingFilter);
+            @Autowired(required = false) LoggingFilter loggingFilter,
+            @Autowired(required = false) com.unc.gateway.plugins.oauth2.OAuth2OidcFilter oauth2OidcFilter) {
+        return new PluginRegistrationInitializer(registry, keyAuthFilter, rateLimitFilter, jwtAuthFilter, requestTransformFilter, loggingFilter, oauth2OidcFilter);
     }
 
     public static class PluginRegistrationInitializer {
@@ -88,7 +123,7 @@ public class GatewayPluginsAutoConfiguration {
                 RateLimitFilter rateLimitFilter,
                 JwtAuthFilter jwtAuthFilter,
                 RequestTransformFilter requestTransformFilter) {
-            this(registry, keyAuthFilter, rateLimitFilter, jwtAuthFilter, requestTransformFilter, null);
+            this(registry, keyAuthFilter, rateLimitFilter, jwtAuthFilter, requestTransformFilter, null, null);
         }
 
         public PluginRegistrationInitializer(
@@ -98,6 +133,17 @@ public class GatewayPluginsAutoConfiguration {
                 JwtAuthFilter jwtAuthFilter,
                 RequestTransformFilter requestTransformFilter,
                 LoggingFilter loggingFilter) {
+            this(registry, keyAuthFilter, rateLimitFilter, jwtAuthFilter, requestTransformFilter, loggingFilter, null);
+        }
+
+        public PluginRegistrationInitializer(
+                PluginRegistry registry,
+                KeyAuthFilter keyAuthFilter,
+                RateLimitFilter rateLimitFilter,
+                JwtAuthFilter jwtAuthFilter,
+                RequestTransformFilter requestTransformFilter,
+                LoggingFilter loggingFilter,
+                com.unc.gateway.plugins.oauth2.OAuth2OidcFilter oauth2OidcFilter) {
             if (registry != null) {
                 if (keyAuthFilter != null && !registry.isRegistered("key-auth")) {
                     registry.register("key-auth", keyAuthFilter, new KeyAuthConfigSchema());
@@ -113,6 +159,9 @@ public class GatewayPluginsAutoConfiguration {
                 }
                 if (loggingFilter != null && !registry.isRegistered("logging")) {
                     registry.register("logging", loggingFilter, new LoggingFilterConfig());
+                }
+                if (oauth2OidcFilter != null && !registry.isRegistered("oauth2-oidc")) {
+                    registry.register("oauth2-oidc", oauth2OidcFilter, new com.unc.gateway.plugins.oauth2.OAuth2OidcConfigSchema());
                 }
             }
         }
