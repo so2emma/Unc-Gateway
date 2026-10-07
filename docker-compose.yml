@@ -87,6 +87,24 @@ services:
     volumes:
       - ./pki/certs/mock-upstream:/pki/certs/mock-upstream:ro
 
+  keycloak:
+    image: quay.io/keycloak/keycloak:24
+    container_name: unc-keycloak
+    command: start-dev --import-realm
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_HEALTH_ENABLED: "true"
+    ports:
+      - "8180:8080"
+    volumes:
+      - ./keycloak/dev-realm.json:/opt/keycloak/data/import/dev-realm.json:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health/ready || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
   redis:
     image: redis:7-alpine
     container_name: unc-redis
@@ -133,6 +151,8 @@ services:
       redis:
         condition: service_healthy
       mock-upstream:
+        condition: service_started
+      keycloak:
         condition: service_started
 
   developer-portal:

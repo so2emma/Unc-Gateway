@@ -1,0 +1,101 @@
+{
+  "id": "unc-dev",
+  "realm": "unc-dev",
+  "displayName": "UNC Dev Realm",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": true,
+  "resetPasswordAllowed": true,
+  "rememberMe": true,
+  "clientScopes": [
+    {
+      "id": "client-scope-api-read",
+      "name": "api:read",
+      "description": "Read access to protected API endpoints",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true",
+        "display.on.consent.screen": "true"
+      }
+    }
+  ],
+  "defaultDefaultClientScopes": [
+    "role_list",
+    "profile",
+    "email",
+    "web-origins",
+    "api:read"
+  ],
+  "clients": [
+    {
+      "id": "client-gateway-core",
+      "clientId": "gateway-core-client",
+      "name": "Gateway Core Client",
+      "description": "Confidential M2M client for gateway-core service accounts",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "changeme",
+      "serviceAccountsEnabled": true,
+      "publicClient": false,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "protocol": "openid-connect",
+      "defaultClientScopes": [
+        "web-origins",
+        "role_list",
+        "profile",
+        "email",
+        "api:read"
+      ]
+    },
+    {
+      "id": "client-dev-portal",
+      "clientId": "dev-portal-client",
+      "name": "Developer Portal Client",
+      "description": "Public client with Authorization Code + PKCE for Developer Portal",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "protocol": "openid-connect",
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      },
+      "redirectUris": [
+        "http://localhost:3000/*",
+        "http://localhost:8180/*",
+        "https://localhost:3000/*"
+      ],
+      "webOrigins": [
+        "*"
+      ],
+      "defaultClientScopes": [
+        "web-origins",
+        "role_list",
+        "profile",
+        "email",
+        "api:read"
+      ]
+    }
+  ],
+  "users": [
+    {
+      "id": "user-devuser",
+      "username": "devuser@unc.local",
+      "email": "devuser@unc.local",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Dev",
+      "lastName": "User",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "devpassword",
+          "temporary": false
+        }
+      ]
+    }
+  ]
+}
