@@ -27,6 +27,7 @@ public final class BuiltInPluginSchemas {
     public static final String JWT_AUTH = "jwt-auth";
     public static final String REQUEST_TRANSFORM = "request-transform";
     public static final String LOGGING = "logging";
+    public static final String OAUTH2_OIDC = "oauth2-oidc";
 
     private static final Set<String> SUPPORTED_JWT_ALGORITHMS =
             Set.of("HS256", "HS384", "HS512", "RS256", "RS384", "RS512");
@@ -48,6 +49,7 @@ public final class BuiltInPluginSchemas {
         registry.register(JWT_AUTH, passThrough(JWT_AUTH), BuiltInPluginSchemas::validateJwtAuth);
         registry.register(REQUEST_TRANSFORM, passThrough(REQUEST_TRANSFORM), BuiltInPluginSchemas::validateRequestTransform);
         registry.register(LOGGING, passThrough(LOGGING), BuiltInPluginSchemas::validateLogging);
+        registry.register(OAUTH2_OIDC, passThrough(OAUTH2_OIDC), BuiltInPluginSchemas::validateOAuth2Oidc);
     }
 
     private static GatewayFilter passThrough(String pluginName) {
@@ -216,6 +218,78 @@ public final class BuiltInPluginSchemas {
         }
     }
 
+    /** {@code oauth2-oidc}: supports mode {@code jwks} (requires {@code jwks_uri}) and {@code introspect} (requires {@code introspection_endpoint}, {@code client_id}, {@code client_secret}). */
+    static void validateOAuth2Oidc(Map<String, Object> config) {
+        if (config == null || config.isEmpty()) {
+            throw new IllegalArgumentException("oauth2-oidc: configuration must not be empty");
+        }
+        rejectUnknownKeys(OAUTH2_OIDC, config, Set.of(
+                "mode", "jwks_uri", "jwksUri", "introspection_endpoint", "introspectionEndpoint",
+                "client_id", "clientId", "client_secret", "clientSecret", "issuer", "audience",
+                "required_scopes", "requiredScopes", "jwks_refresh_interval_seconds", "jwksRefreshIntervalSeconds",
+                "introspection_cache_ttl_seconds", "introspectionCacheTtlSeconds", "header_name", "headerName"
+        ));
+
+        String mode = "jwks";
+        if (config.containsKey("mode")) {
+            mode = requireString(OAUTH2_OIDC, config, "mode").toLowerCase();
+            if (!"jwks".equals(mode) && !"introspect".equals(mode)) {
+                throw new IllegalArgumentException("oauth2-oidc: 'mode' must be either 'jwks' or 'introspect'");
+            }
+        }
+
+        if ("jwks".equals(mode)) {
+            boolean hasJwksUri = isNonBlankString(config.get("jwks_uri")) || isNonBlankString(config.get("jwksUri"));
+            if (!hasJwksUri) {
+                throw new IllegalArgumentException("oauth2-oidc: 'jwks_uri' is required in jwks mode");
+            }
+        } else {
+            boolean hasEndpoint = isNonBlankString(config.get("introspection_endpoint"))
+                    || isNonBlankString(config.get("introspectionEndpoint"));
+            boolean hasClientId = isNonBlankString(config.get("client_id"))
+                    || isNonBlankString(config.get("clientId"));
+            boolean hasClientSecret = isNonBlankString(config.get("client_secret"))
+                    || isNonBlankString(config.get("clientSecret"));
+            if (!hasEndpoint || !hasClientId || !hasClientSecret) {
+                throw new IllegalArgumentException("oauth2-oidc: 'introspection_endpoint', 'client_id', and 'client_secret' are required in introspect mode");
+            }
+        }
+
+        if (config.containsKey("issuer")) {
+            requireString(OAUTH2_OIDC, config, "issuer");
+        }
+        if (config.containsKey("audience")) {
+            Object aud = config.get("audience");
+            if (!(aud instanceof String) && !(aud instanceof List<?>)) {
+                throw new IllegalArgumentException("oauth2-oidc: 'audience' must be a string or array of strings");
+            }
+        }
+        if (config.containsKey("required_scopes")) {
+            requireStringList(OAUTH2_OIDC, config, "required_scopes");
+        }
+        if (config.containsKey("requiredScopes")) {
+            requireStringList(OAUTH2_OIDC, config, "requiredScopes");
+        }
+        if (config.containsKey("jwks_refresh_interval_seconds")) {
+            requirePositiveInt(OAUTH2_OIDC, config, "jwks_refresh_interval_seconds");
+        }
+        if (config.containsKey("jwksRefreshIntervalSeconds")) {
+            requirePositiveInt(OAUTH2_OIDC, config, "jwksRefreshIntervalSeconds");
+        }
+        if (config.containsKey("introspection_cache_ttl_seconds")) {
+            requirePositiveInt(OAUTH2_OIDC, config, "introspection_cache_ttl_seconds");
+        }
+        if (config.containsKey("introspectionCacheTtlSeconds")) {
+            requirePositiveInt(OAUTH2_OIDC, config, "introspectionCacheTtlSeconds");
+        }
+        if (config.containsKey("header_name")) {
+            requireString(OAUTH2_OIDC, config, "header_name");
+        }
+        if (config.containsKey("headerName")) {
+            requireString(OAUTH2_OIDC, config, "headerName");
+        }
+    }
+
     // --- Shared primitive checks --------------------------------------------------------------
 
     private static void rejectUnknownKeys(String plugin, Map<String, Object> config, Set<String> allowed) {
@@ -277,6 +351,7 @@ public final class BuiltInPluginSchemas {
             case JWT_AUTH -> BuiltInPluginSchemas::validateJwtAuth;
             case REQUEST_TRANSFORM -> BuiltInPluginSchemas::validateRequestTransform;
             case LOGGING -> BuiltInPluginSchemas::validateLogging;
+            case OAUTH2_OIDC -> BuiltInPluginSchemas::validateOAuth2Oidc;
             default -> throw new IllegalArgumentException("Unknown plugin: " + pluginName);
         };
     }

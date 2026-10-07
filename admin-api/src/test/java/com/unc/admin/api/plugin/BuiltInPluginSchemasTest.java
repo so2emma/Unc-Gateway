@@ -30,6 +30,7 @@ class BuiltInPluginSchemasTest {
         assertThat(registry.isRegistered("jwt-auth")).isTrue();
         assertThat(registry.isRegistered("request-transform")).isTrue();
         assertThat(registry.isRegistered("logging")).isTrue();
+        assertThat(registry.isRegistered("oauth2-oidc")).isTrue();
         assertThat(registry.isRegistered("nonexistent")).isFalse();
     }
 
@@ -117,6 +118,40 @@ class BuiltInPluginSchemasTest {
         assertThatThrownBy(() -> registry.validateConfig(config("logging", Map.of("level", "LOUD"))))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("unsupported 'level' value 'LOUD'");
+    }
+
+    @Test
+    @DisplayName("validateConfig - oauth2-oidc validates jwks and introspect configurations")
+    void testOAuth2OidcSchema() {
+        assertThatCode(() -> registry.validateConfig(config("oauth2-oidc", Map.of(
+                "mode", "jwks",
+                "jwks_uri", "https://keycloak.local/certs",
+                "issuer", "https://keycloak.local",
+                "required_scopes", List.of("api:read")))))
+                .doesNotThrowAnyException();
+
+        assertThatCode(() -> registry.validateConfig(config("oauth2-oidc", Map.of(
+                "mode", "introspect",
+                "introspection_endpoint", "https://keycloak.local/introspect",
+                "client_id", "gw-client",
+                "client_secret", "gw-secret"))))
+                .doesNotThrowAnyException();
+
+        assertThatThrownBy(() -> registry.validateConfig(config("oauth2-oidc", Map.of("mode", "jwks"))))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("'jwks_uri' is required in jwks mode");
+
+        assertThatThrownBy(() -> registry.validateConfig(config("oauth2-oidc", Map.of(
+                "mode", "introspect",
+                "introspection_endpoint", "https://keycloak.local/introspect"))))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("'introspection_endpoint', 'client_id', and 'client_secret' are required in introspect mode");
+
+        assertThatThrownBy(() -> registry.validateConfig(config("oauth2-oidc", Map.of(
+                "jwks_uri", "https://keycloak.local/certs",
+                "invalid_field", true))))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("unknown config field 'invalid_field'");
     }
 
     @Test
