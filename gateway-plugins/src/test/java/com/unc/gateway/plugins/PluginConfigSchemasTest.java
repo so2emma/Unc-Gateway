@@ -251,4 +251,50 @@ class PluginConfigSchemasTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("unknown config field 'unknown_key'");
     }
+
+    private final com.unc.gateway.plugins.oauth2.OAuth2OidcConfigSchema oauth2Schema =
+            new com.unc.gateway.plugins.oauth2.OAuth2OidcConfigSchema();
+
+    @Test
+    @DisplayName("OAuth2OidcConfigSchema: accepts valid jwks and introspect configurations")
+    void testOAuth2OidcValid() {
+        Map<String, Object> jwksConfig = Map.of(
+                "mode", "jwks",
+                "jwks_uri", "https://auth.example.com/certs",
+                "issuer", "https://auth.example.com",
+                "audience", "api",
+                "required_scopes", List.of("read"),
+                "jwks_refresh_interval_seconds", 300
+        );
+        assertThatCode(() -> oauth2Schema.validate(jwksConfig)).doesNotThrowAnyException();
+        assertThat(com.unc.gateway.plugins.oauth2.OAuth2OidcConfigSchema.extractMode(jwksConfig)).isEqualTo("jwks");
+        assertThat(com.unc.gateway.plugins.oauth2.OAuth2OidcConfigSchema.extractJwksUri(jwksConfig)).isEqualTo("https://auth.example.com/certs");
+
+        Map<String, Object> introspectConfig = Map.of(
+                "mode", "introspect",
+                "introspection_endpoint", "https://auth.example.com/introspect",
+                "client_id", "client",
+                "client_secret", "secret",
+                "introspection_cache_ttl_seconds", 60
+        );
+        assertThatCode(() -> oauth2Schema.validate(introspectConfig)).doesNotThrowAnyException();
+        assertThat(com.unc.gateway.plugins.oauth2.OAuth2OidcConfigSchema.extractMode(introspectConfig)).isEqualTo("introspect");
+        assertThat(com.unc.gateway.plugins.oauth2.OAuth2OidcConfigSchema.extractIntrospectionEndpoint(introspectConfig)).isEqualTo("https://auth.example.com/introspect");
+    }
+
+    @Test
+    @DisplayName("OAuth2OidcConfigSchema: rejects invalid fields, missing URIs, and missing credentials")
+    void testOAuth2OidcInvalid() {
+        assertThatThrownBy(() -> oauth2Schema.validate(Map.of("mode", "jwks")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("'jwks_uri' is required in jwks mode");
+
+        assertThatThrownBy(() -> oauth2Schema.validate(Map.of("mode", "introspect", "introspection_endpoint", "https://a.com")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("'introspection_endpoint', 'client_id', and 'client_secret' are required in introspect mode");
+
+        assertThatThrownBy(() -> oauth2Schema.validate(Map.of("mode", "unsupported", "jwks_uri", "https://a.com")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("unsupported 'mode' value");
+    }
 }
