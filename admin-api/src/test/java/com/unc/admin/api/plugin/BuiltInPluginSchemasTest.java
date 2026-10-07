@@ -73,6 +73,10 @@ class BuiltInPluginSchemasTest {
                 config("jwt-auth", Map.of("secret", "s3cr3t", "algorithm", "HS256"))))
                 .doesNotThrowAnyException();
 
+        assertThatCode(() -> registry.validateConfig(
+                config("jwt-auth", Map.of("publicKey", "pub-key-data", "algorithm", "RS256", "headerName", "X-Auth"))))
+                .doesNotThrowAnyException();
+
         assertThatThrownBy(() -> registry.validateConfig(config("jwt-auth", Map.of("secret", ""))))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("either 'secret' or 'public_key' is required");
@@ -88,7 +92,14 @@ class BuiltInPluginSchemasTest {
     void testRequestTransformSchema() {
         assertThatCode(() -> registry.validateConfig(config("request-transform", Map.of(
                 "add_headers", Map.of("X-Tenant", "acme"),
-                "remove_headers", List.of("X-Internal")))))
+                "remove_headers", List.of("X-Internal"),
+                "rename_headers", Map.of("Old-Hdr", "New-Hdr")))))
+                .doesNotThrowAnyException();
+
+        assertThatCode(() -> registry.validateConfig(config("request-transform", Map.of(
+                "addHeaders", Map.of("X-Gateway-Trace", "unc-gateway"),
+                "removeHeaders", List.of("X-Debug"),
+                "renameHeaders", Map.of("X-Old", "X-New")))))
                 .doesNotThrowAnyException();
 
         assertThatThrownBy(() -> registry.validateConfig(

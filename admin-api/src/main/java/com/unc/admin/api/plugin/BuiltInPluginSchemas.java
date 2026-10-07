@@ -83,26 +83,34 @@ public final class BuiltInPluginSchemas {
         }
     }
 
-    /** {@code rate-limit}: requires positive integers {@code limit} and {@code window_seconds}. */
+    /** {@code rate-limit}: requires positive integers {@code limit} and {@code window_seconds} (or {@code windowSeconds}). */
     static void validateRateLimit(Map<String, Object> config) {
         if (config == null || config.isEmpty()) {
             throw new IllegalArgumentException(
                     "rate-limit: 'limit' and 'window_seconds' are required positive integers");
         }
-        rejectUnknownKeys(RATE_LIMIT, config, Set.of("limit", "window_seconds", "policy"));
+        rejectUnknownKeys(RATE_LIMIT, config, Set.of("limit", "window_seconds", "windowSeconds", "policy"));
         requirePositiveInt(RATE_LIMIT, config, "limit");
-        requirePositiveInt(RATE_LIMIT, config, "window_seconds");
+        if (!config.containsKey("window_seconds") && !config.containsKey("windowSeconds")) {
+            throw new IllegalArgumentException("rate-limit: 'window_seconds' must be a positive integer");
+        }
+        if (config.containsKey("window_seconds")) {
+            requirePositiveInt(RATE_LIMIT, config, "window_seconds");
+        }
+        if (config.containsKey("windowSeconds")) {
+            requirePositiveInt(RATE_LIMIT, config, "windowSeconds");
+        }
     }
 
-    /** {@code jwt-auth}: requires {@code secret} or {@code public_key}; optional {@code algorithm}. */
+    /** {@code jwt-auth}: requires {@code secret} or {@code public_key}; optional {@code algorithm}, {@code header_name}, {@code claims}. */
     static void validateJwtAuth(Map<String, Object> config) {
         if (config == null || config.isEmpty()) {
             throw new IllegalArgumentException("jwt-auth: either 'secret' or 'public_key' is required");
         }
-        rejectUnknownKeys(JWT_AUTH, config, Set.of("secret", "public_key", "algorithm", "claims"));
+        rejectUnknownKeys(JWT_AUTH, config, Set.of("secret", "public_key", "publicKey", "algorithm", "header_name", "headerName", "claims"));
 
         boolean hasSecret = isNonBlankString(config.get("secret"));
-        boolean hasPublicKey = isNonBlankString(config.get("public_key"));
+        boolean hasPublicKey = isNonBlankString(config.get("public_key")) || isNonBlankString(config.get("publicKey"));
         if (!hasSecret && !hasPublicKey) {
             throw new IllegalArgumentException("jwt-auth: either 'secret' or 'public_key' is required");
         }
@@ -113,43 +121,69 @@ public final class BuiltInPluginSchemas {
                         + "', expected one of " + SUPPORTED_JWT_ALGORITHMS);
             }
         }
+        if (config.containsKey("header_name")) {
+            requireString(JWT_AUTH, config, "header_name");
+        }
+        if (config.containsKey("headerName")) {
+            requireString(JWT_AUTH, config, "headerName");
+        }
         if (config.containsKey("claims")) {
             requireStringList(JWT_AUTH, config, "claims");
         }
     }
 
-    /** {@code request-transform}: optional {@code add_headers} map and {@code remove_headers} list. */
+    /** {@code request-transform}: optional {@code add_headers}, {@code remove_headers}, and {@code rename_headers}. */
     static void validateRequestTransform(Map<String, Object> config) {
         if (config == null || config.isEmpty()) {
             return;
         }
-        rejectUnknownKeys(REQUEST_TRANSFORM, config, Set.of("add_headers", "remove_headers"));
+        rejectUnknownKeys(REQUEST_TRANSFORM, config, Set.of("add_headers", "addHeaders", "remove_headers", "removeHeaders", "rename_headers", "renameHeaders"));
         if (config.containsKey("add_headers")) {
-            Object raw = config.get("add_headers");
-            if (!(raw instanceof Map<?, ?> headers)) {
-                throw new IllegalArgumentException("request-transform: 'add_headers' must be an object of header name to value");
-            }
-            for (Map.Entry<?, ?> entry : headers.entrySet()) {
-                if (!(entry.getKey() instanceof String) || !isNonBlankString(entry.getKey())) {
-                    throw new IllegalArgumentException("request-transform: 'add_headers' keys must be non-empty strings");
-                }
-                if (!(entry.getValue() instanceof String)) {
-                    throw new IllegalArgumentException("request-transform: 'add_headers' value for '"
-                            + entry.getKey() + "' must be a string");
-                }
-            }
+            validateHeaderMap(REQUEST_TRANSFORM, config.get("add_headers"), "add_headers");
+        }
+        if (config.containsKey("addHeaders")) {
+            validateHeaderMap(REQUEST_TRANSFORM, config.get("addHeaders"), "addHeaders");
         }
         if (config.containsKey("remove_headers")) {
             requireStringList(REQUEST_TRANSFORM, config, "remove_headers");
         }
+        if (config.containsKey("removeHeaders")) {
+            requireStringList(REQUEST_TRANSFORM, config, "removeHeaders");
+        }
+        if (config.containsKey("rename_headers")) {
+            validateHeaderMap(REQUEST_TRANSFORM, config.get("rename_headers"), "rename_headers");
+        }
+        if (config.containsKey("renameHeaders")) {
+            validateHeaderMap(REQUEST_TRANSFORM, config.get("renameHeaders"), "renameHeaders");
+        }
     }
 
-    /** {@code logging}: optional {@code level} restricted to the supported log levels. */
+    private static void validateHeaderMap(String plugin, Object raw, String field) {
+        if (!(raw instanceof Map<?, ?> headers)) {
+            throw new IllegalArgumentException(plugin + ": '" + field + "' must be an object of header name to value");
+        }
+        for (Map.Entry<?, ?> entry : headers.entrySet()) {
+            if (!(entry.getKey() instanceof String) || !isNonBlankString(entry.getKey())) {
+                throw new IllegalArgumentException(plugin + ": '" + field + "' keys must be non-empty strings");
+            }
+            if (!(entry.getValue() instanceof String)) {
+                throw new IllegalArgumentException(plugin + ": '" + field + "' value for '"
+                        + entry.getKey() + "' must be a string");
+            }
+        }
+    }
+
+    /** {@code logging}: optional {@code level} restricted to the supported log levels, plus flags for headers and body. */
     static void validateLogging(Map<String, Object> config) {
         if (config == null || config.isEmpty()) {
             return;
         }
-        rejectUnknownKeys(LOGGING, config, Set.of("level", "include_body"));
+        rejectUnknownKeys(LOGGING, config, Set.of(
+                "level", "log_level", "logLevel",
+                "include_headers", "includeHeaders",
+                "include_request_headers", "includeRequestHeaders",
+                "include_response_headers", "includeResponseHeaders",
+                "include_body", "includeBody"));
         if (config.containsKey("level")) {
             String level = requireString(LOGGING, config, "level");
             if (!SUPPORTED_LOG_LEVELS.contains(level.toUpperCase())) {
@@ -157,8 +191,28 @@ public final class BuiltInPluginSchemas {
                         + "', expected one of " + SUPPORTED_LOG_LEVELS);
             }
         }
-        if (config.containsKey("include_body")) {
-            requireBoolean(LOGGING, config, "include_body");
+        if (config.containsKey("log_level")) {
+            String level = requireString(LOGGING, config, "log_level");
+            if (!SUPPORTED_LOG_LEVELS.contains(level.toUpperCase())) {
+                throw new IllegalArgumentException("logging: unsupported 'level' value '" + level
+                        + "', expected one of " + SUPPORTED_LOG_LEVELS);
+            }
+        }
+        if (config.containsKey("logLevel")) {
+            String level = requireString(LOGGING, config, "logLevel");
+            if (!SUPPORTED_LOG_LEVELS.contains(level.toUpperCase())) {
+                throw new IllegalArgumentException("logging: unsupported 'level' value '" + level
+                        + "', expected one of " + SUPPORTED_LOG_LEVELS);
+            }
+        }
+        for (String field : List.of(
+                "include_headers", "includeHeaders",
+                "include_request_headers", "includeRequestHeaders",
+                "include_response_headers", "includeResponseHeaders",
+                "include_body", "includeBody")) {
+            if (config.containsKey(field)) {
+                requireBoolean(LOGGING, config, field);
+            }
         }
     }
 

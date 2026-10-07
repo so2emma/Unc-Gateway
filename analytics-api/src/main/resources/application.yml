@@ -1,0 +1,14 @@
+server:
+  port: ${SERVER_PORT:8083}
+
+spring:
+  application:
+    name: analytics-api
+  r2dbc:
+    url: ${SPRING_R2DBC_URL:r2dbc:postgresql://${R2DBC_HOST:localhost}:${R2DBC_PORT:5432}/${R2DBC_DATABASE:unc_db}}
+    username: ${SPRING_R2DBC_USERNAME:${R2DBC_USER:postgres}}
+    password: ${SPRING_R2DBC_PASSWORD:${R2DBC_PASSWORD:postgrespassword}}
+    pool:
+      enabled: true
+      initial-size: 5
+      max-size: 20

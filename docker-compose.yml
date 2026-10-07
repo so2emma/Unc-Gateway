@@ -34,6 +34,24 @@ services:
       postgres:
         condition: service_healthy
 
+  analytics-api:
+    build:
+      context: .
+      dockerfile: analytics-api/Dockerfile
+    container_name: unc-analytics-api
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_R2DBC_URL: r2dbc:postgresql://postgres:5432/unc_db
+      SPRING_R2DBC_USERNAME: postgres
+      SPRING_R2DBC_PASSWORD: postgrespassword
+      SERVER_PORT: 8083
+    depends_on:
+      postgres:
+        condition: service_healthy
+      admin-api:
+        condition: service_started
+
   mock-upstream:
     build:
       context: .
@@ -42,6 +60,17 @@ services:
     ports:
       - "9090:9090"
       - "8085:9090"
+
+  redis:
+    image: redis:7-alpine
+    container_name: unc-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
 
   gateway-core:
     build:
@@ -54,10 +83,14 @@ services:
       SPRING_R2DBC_URL: r2dbc:postgresql://postgres:5432/unc_db
       SPRING_R2DBC_USERNAME: postgres
       SPRING_R2DBC_PASSWORD: postgrespassword
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
       UPSTREAM_BASE_URL: http://mock-upstream:9090
       UPSTREAM_ROUTE_PREFIX: /proxy
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
       mock-upstream:
         condition: service_started
@@ -77,6 +110,25 @@ services:
     depends_on:
       - admin-api
 
+  admin-dashboard:
+    build:
+      context: ./admin-dashboard
+      dockerfile: Dockerfile
+    container_name: unc-admin-dashboard
+    ports:
+      - "3001:3000"
+    environment:
+      ADMIN_API_URL: http://admin-api:8081
+      NEXT_PUBLIC_ADMIN_API_URL: http://admin-api:8081
+      ANALYTICS_API_URL: http://analytics-api:8083
+      NEXT_PUBLIC_ANALYTICS_API_URL: http://analytics-api:8083
+      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-}
+      DEFAULT_ADMIN_API_KEY: ${DEFAULT_ADMIN_API_KEY:-}
+    depends_on:
+      - admin-api
+      - analytics-api
+
 volumes:
   postgres_data:
+
 

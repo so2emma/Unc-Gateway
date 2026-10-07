@@ -23,10 +23,18 @@ public class RouteChangeEventHandler {
 
     private final RouteCacheLoader routeCacheLoader;
     private final RouteCache routeCache;
+    private final com.unc.gateway.plugins.PluginConfigLoader pluginConfigLoader;
 
     public RouteChangeEventHandler(RouteCacheLoader routeCacheLoader, RouteCache routeCache) {
+        this(routeCacheLoader, routeCache, null);
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public RouteChangeEventHandler(RouteCacheLoader routeCacheLoader, RouteCache routeCache,
+                                   @org.springframework.beans.factory.annotation.Autowired(required = false) com.unc.gateway.plugins.PluginConfigLoader pluginConfigLoader) {
         this.routeCacheLoader = Objects.requireNonNull(routeCacheLoader, "routeCacheLoader must not be null");
         this.routeCache = Objects.requireNonNull(routeCache, "routeCache must not be null");
+        this.pluginConfigLoader = pluginConfigLoader;
     }
 
     /**
@@ -123,6 +131,9 @@ public class RouteChangeEventHandler {
     private Mono<Void> handlePluginConfigEvent(RouteChangeEvent event) {
         log.info("Received plugin_configs event: op={}, id={}, tenantId={}",
                 event.operation(), event.id(), event.tenantId());
+        if (pluginConfigLoader != null) {
+            return pluginConfigLoader.loadAndPopulateCache().then();
+        }
         return Mono.empty();
     }
 }

@@ -78,7 +78,13 @@ public class DynamicRouteResolver {
 
         return Mono.justOrEmpty(routeCache.lookup(path, tenantId))
                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "No route found for path: " + path)))
-                .map(route -> buildTargetUrl(route, path, request.getURI().getRawQuery()));
+                .map(route -> {
+                    exchange.getAttributes().put("matched_route", route);
+                    if (route.tenantId() != null) {
+                        exchange.getAttributes().put("tenant_id", route.tenantId());
+                    }
+                    return buildTargetUrl(route, path, request.getURI().getRawQuery());
+                });
     }
 
     public static String buildTargetUrl(RouteEntry route, String requestPath, String query) {

@@ -23,6 +23,11 @@
             <artifactId>gateway-plugins-api</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.unc</groupId>
+            <artifactId>gateway-plugins</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
